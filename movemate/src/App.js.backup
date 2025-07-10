@@ -61,48 +61,69 @@ const DriverRegistration = ({ onComplete }) => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    const newErrors = {};
+  const newErrors = {};
+  
+  if (!validateUKReg(reg)) {
+    newErrors.reg = 'Please enter a valid UK registration number';
+  }
+  
+  if (!validateUKMobile(phone)) {
+    newErrors.phone = 'Please enter a valid UK mobile number';
+  }
+  
+  if (!consent) {
+    newErrors.consent = 'You must consent to data storage';
+  }
+  
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+  
+  setLoading(true);
+  
+  try {
+    // 1. Insert the registration into database
+    const { error } = await supabase
+      .from('registrations')
+      .insert([
+        {
+          reg: reg.toUpperCase().replace(/\s/g, ''),
+          phone: formatPhoneNumber(phone),
+          consent_timestamp: new Date().toISOString()
+        }
+      ]);
     
-    if (!validateUKReg(reg)) {
-      newErrors.reg = 'Please enter a valid UK registration number';
-    }
+    if (error) throw error;
     
-    if (!validateUKMobile(phone)) {
-      newErrors.phone = 'Please enter a valid UK mobile number';
-    }
-    
-    if (!consent) {
-      newErrors.consent = 'You must consent to data storage';
-    }
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    
-    setLoading(true);
-    
+    // 2. Send confirmation SMS to the driver
     try {
-      const { error } = await supabase
-        .from('registrations')
-        .insert([
-          {
-            reg: reg.toUpperCase().replace(/\s/g, ''),
-            phone: formatPhoneNumber(phone),
-            consent_timestamp: new Date().toISOString()
-          }
-        ]);
+      await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          phone: formatPhoneNumber(phone),
+          message: `Registration confirmed. Your vehicle ${reg.toUpperCase().replace(/\s/g, '')} is now registered with MoveMate. You'll receive a text if you need to move it. Data will be deleted after 12 hours.`
+        })
+      });
       
-      if (error) throw error;
-      
-      onComplete();
-    } catch (error) {
-      console.error('Error:', error);
-      setErrors({ submit: 'Failed to register. Please try again.' });
-    } finally {
-      setLoading(false);
+      console.log('Confirmation SMS sent successfully');
+    } catch (smsError) {
+      console.error('Failed to send confirmation SMS:', smsError);
+      // Don't fail the registration if SMS fails
     }
-  };
+    
+    onComplete();
+  } catch (error) {
+    console.error('Error:', error);
+    setErrors({ submit: 'Failed to register. Please try again.' });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
