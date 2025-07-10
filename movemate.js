@@ -255,12 +255,12 @@ const BlockedDriverInput = ({ onComplete }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Enter Your Registration</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Report Blocked Vehicle</h2>
         
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Your Vehicle Registration Number
+              Blocking Vehicle Registration
             </label>
             <input
               type="text"
@@ -272,7 +272,7 @@ const BlockedDriverInput = ({ onComplete }) => {
               placeholder="AB12 CDE"
               className={`w-full px-4 py-3 border rounded-lg text-lg ${
                 error ? 'border-red-500' : 'border-gray-300'
-              } focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+              } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
             />
             {error && (
               <p className="mt-2 text-sm text-red-600">{error}</p>
@@ -282,7 +282,7 @@ const BlockedDriverInput = ({ onComplete }) => {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-4 px-8 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-purple-600 text-white py-4 px-8 rounded-lg text-lg font-semibold hover:bg-purple-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Sending...' : 'Send Notification'}
           </button>
