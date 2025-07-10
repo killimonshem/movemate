@@ -1,14 +1,21 @@
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 console.log('🚀 Starting MoveMate...');
-console.log('📁 Checking if dependencies are installed...');
 
-// Check if node_modules exists in movemate directory
-const fs = require('fs');
 const movematePath = path.join(__dirname, 'movemate');
-const nodeModulesPath = path.join(movematePath, 'node_modules');
 
+// Check if .env exists
+const envPath = path.join(movematePath, '.env');
+if (!fs.existsSync(envPath)) {
+  console.error('❌ Missing .env file!');
+  console.log('📝 Please copy .env.example to .env and configure your Supabase credentials');
+  process.exit(1);
+}
+
+// Check and install dependencies
+const nodeModulesPath = path.join(movematePath, 'node_modules');
 if (!fs.existsSync(nodeModulesPath)) {
   console.log('📦 Installing dependencies...');
   const install = spawn('npm', ['install'], { 
@@ -32,7 +39,7 @@ if (!fs.existsSync(nodeModulesPath)) {
 
 function startApp() {
   console.log('🌐 Starting development server...');
-  console.log('�� Your app will open at: http://localhost:3000');
+  console.log('🌍 Your app will open at: http://localhost:3000');
   console.log('🛑 Press Ctrl+C to stop the server');
   
   const start = spawn('npm', ['start'], { 
@@ -43,4 +50,4 @@ function startApp() {
   start.on('close', (code) => {
     console.log(`\n👋 Server stopped with code ${code}`);
   });
-} 
+}
