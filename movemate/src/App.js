@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import './App.css';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://frxtcfoopvmfhwjezyuf.supabase.co';
@@ -33,326 +34,123 @@ const formatPhoneNumber = (phone) => {
   return cleaned;
 };
 
-// Styles object
-const styles = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#ffffff',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '20px',
-    paddingTop: '10px'
-  },
-  backButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '12px 16px',
-    backgroundColor: 'transparent',
-    border: 'none',
-    borderRadius: '8px',
-    color: '#007AFF',
-    fontSize: '16px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  },
-  contentWrapper: {
-    maxWidth: '400px',
-    margin: '0 auto',
-    width: '100%',
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center'
-  },
-  heading: {
-    fontSize: '32px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: '8px',
-    lineHeight: '1.2'
-  },
-  subheading: {
-    fontSize: '18px',
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: '48px',
-    lineHeight: '1.4'
-  },
-  homeTitle: {
-    fontSize: '42px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: '16px'
-  },
-  homeSubtitle: {
-    fontSize: '20px',
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: '48px'
-  },
-  buttonPrimary: {
-    width: '100%',
-    backgroundColor: '#007AFF',
-    color: 'white',
-    padding: '18px 24px',
-    borderRadius: '12px',
-    border: 'none',
-    fontSize: '18px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    transition: 'all 0.2s ease',
-    marginBottom: '16px'
-  },
-  buttonSecondary: {
-    width: '100%',
-    backgroundColor: '#f5f5f5',
-    color: '#1a1a1a',
-    padding: '18px 24px',
-    borderRadius: '12px',
-    border: 'none',
-    fontSize: '18px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    transition: 'all 0.2s ease',
-    marginBottom: '16px'
-  },
-  buttonTertiary: {
-    width: '100%',
-    backgroundColor: 'white',
-    color: '#666666',
-    padding: '16px 24px',
-    borderRadius: '12px',
-    border: '1px solid #e5e5e5',
-    fontSize: '16px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  inputContainer: {
-    marginBottom: '24px'
-  },
-  label: {
-    display: 'block',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#1a1a1a',
-    marginBottom: '8px'
-  },
-  inputWrapper: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center'
-  },
-  input: {
-    width: '100%',
-    padding: '16px 16px 16px 48px',
-    border: '1px solid #e5e5e5',
-    borderRadius: '12px',
-    fontSize: '18px',
-    backgroundColor: 'white',
-    outline: 'none',
-    transition: 'all 0.2s ease',
-    boxSizing: 'border-box'
-  },
-  inputFocus: {
-    borderColor: '#007AFF',
-    boxShadow: '0 0 0 3px rgba(0, 122, 255, 0.1)'
-  },
-  inputError: {
-    borderColor: '#FF3B30',
-    backgroundColor: '#FFF5F5'
-  },
-  inputSuccess: {
-    borderColor: '#34C759',
-    backgroundColor: '#F0FFF4'
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: '16px',
-    width: '20px',
-    height: '20px',
-    color: '#666666',
-    zIndex: 1
-  },
-  successIcon: {
-    position: 'absolute',
-    right: '16px',
-    width: '20px',
-    height: '20px',
-    color: '#34C759'
-  },
-  errorMessage: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    color: '#FF3B30',
-    fontSize: '14px',
-    marginTop: '8px'
-  },
-  checkboxContainer: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '12px',
-    marginBottom: '24px'
-  },
-  checkbox: {
-    width: '20px',
-    height: '20px',
-    marginTop: '2px',
-    accentColor: '#007AFF'
-  },
-  checkboxLabel: {
-    fontSize: '14px',
-    color: '#666666',
-    lineHeight: '1.4'
-  },
-  successContainer: {
-    textAlign: 'center',
-    marginBottom: '48px'
-  },
-  successIconContainer: {
-    width: '80px',
-    height: '80px',
-    backgroundColor: '#E8F5E8',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 24px'
-  },
-  loadingSpinner: {
-    width: '20px',
-    height: '20px',
-    border: '2px solid transparent',
-    borderTop: '2px solid white',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
-  },
-  errorContainer: {
-    backgroundColor: '#FFF5F5',
-    border: '1px solid #FFD1D1',
-    borderRadius: '12px',
-    padding: '16px',
-    marginBottom: '24px'
-  },
-  adminContainer: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '20px'
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    marginTop: '20px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-  },
-  tableHeader: {
-    backgroundColor: '#f8f9fa',
-    padding: '12px',
-    textAlign: 'left',
-    fontWeight: '600',
-    fontSize: '14px',
-    color: '#495057',
-    borderBottom: '1px solid #e9ecef'
-  },
-  tableCell: {
-    padding: '12px',
-    borderBottom: '1px solid #e9ecef',
-    fontSize: '14px'
-  },
-  notifyButton: {
-    backgroundColor: '#007AFF',
-    color: 'white',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
-  },
-  loginForm: {
-    backgroundColor: 'white',
-    padding: '32px',
-    borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    maxWidth: '300px',
-    margin: '0 auto'
-  }
+// Mask phone number for privacy
+const maskPhoneNumber = (phone) => {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 6) return phone;
+  return phone.substring(0, phone.length - 7) + '***' + phone.substring(phone.length - 4);
 };
 
 // Icon Components
-const CarIcon = ({ style = {} }) => (
-  <svg style={{ ...styles.inputIcon, ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const CarIcon = ({ className = '' }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 18v-2a2 2 0 012-2h4a2 2 0 012 2v2M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m0 8h.01M8 14h.01" />
   </svg>
 );
 
-const PhoneIcon = ({ style = {} }) => (
-  <svg style={{ ...styles.inputIcon, ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const PhoneIcon = ({ className = '' }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
   </svg>
 );
 
-const ArrowRightIcon = ({ style = {} }) => (
-  <svg style={{ width: '20px', height: '20px', ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const ArrowRightIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
   </svg>
 );
 
-const ArrowLeftIcon = ({ style = {} }) => (
-  <svg style={{ width: '20px', height: '20px', ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const ArrowLeftIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
   </svg>
 );
 
-const CheckIcon = ({ style = {} }) => (
-  <svg style={{ width: '20px', height: '20px', ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const CheckIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
   </svg>
 );
 
-const AlertIcon = ({ style = {} }) => (
-  <svg style={{ width: '16px', height: '16px', ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const AlertIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
   </svg>
 );
 
-const LockIcon = ({ style = {} }) => (
-  <svg style={{ width: '16px', height: '16px', ...style }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const LockIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
   </svg>
 );
 
+const SearchIcon = ({ className = '' }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+
+const RefreshIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const ClockIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const SendIcon = ({ className = '' }) => (
+  <svg className={className} style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+  </svg>
+);
+
+// Toast Component
+const Toast = ({ message, type = 'success', onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`toast toast-${type}`}>
+      {type === 'success' ? <CheckIcon /> : <AlertIcon />}
+      <span>{message}</span>
+    </div>
+  );
+};
+
+// Modal Component
+const Modal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h3 className="modal-title">{title}</h3>
+        <p className="modal-message">{message}</p>
+        <div className="modal-actions">
+          <button className="modal-button modal-button-secondary" onClick={onClose}>
+            {cancelText}
+          </button>
+          <button className="modal-button modal-button-primary" onClick={onConfirm}>
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Back Button Component
 const BackButton = ({ onClick, text = "Back" }) => (
-  <button 
-    style={styles.backButton} 
-    onClick={onClick}
-    onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
-    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-  >
+  <button className="back-button" onClick={onClick}>
     <ArrowLeftIcon />
     <span>{text}</span>
   </button>
@@ -372,18 +170,18 @@ const InputField = ({
 }) => {
   const [focused, setFocused] = useState(false);
   
-  const getInputStyle = () => {
-    if (error) return { ...styles.input, ...styles.inputError };
-    if (success) return { ...styles.input, ...styles.inputSuccess };
-    if (focused) return { ...styles.input, ...styles.inputFocus };
-    return styles.input;
+  const getInputClassName = () => {
+    let className = 'input';
+    if (error) className += ' input-error';
+    else if (success) className += ' input-success';
+    return className;
   };
 
   return (
-    <div style={styles.inputContainer}>
-      <label style={styles.label}>{label}</label>
-      <div style={styles.inputWrapper}>
-        <Icon style={{ ...styles.inputIcon, color: error ? '#FF3B30' : success ? '#34C759' : '#666666' }} />
+    <div className="input-container">
+      <label className="label">{label}</label>
+      <div className="input-wrapper">
+        <Icon className={`input-icon ${error ? 'error' : success ? 'success' : ''}`} />
         <input
           type={type}
           value={value}
@@ -391,15 +189,13 @@ const InputField = ({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
-          style={getInputStyle()}
+          className={getInputClassName()}
           {...props}
         />
-        {success && (
-          <CheckIcon style={styles.successIcon} />
-        )}
+        {success && <CheckIcon className="success-icon" />}
       </div>
       {error && (
-        <div style={styles.errorMessage}>
+        <div className="error-message">
           <AlertIcon />
           <span>{error}</span>
         </div>
@@ -410,40 +206,25 @@ const InputField = ({
 
 // Home Screen Component
 const HomeScreen = ({ onNavigate }) => (
-  <div style={styles.container}>
-    <div style={styles.contentWrapper}>
-      <h1 style={styles.homeTitle}>MoveMate</h1>
-      <p style={styles.homeSubtitle}>
+  <div className="container">
+    <div className="content-wrapper">
+      <h1 className="home-title">MoveMate</h1>
+      <p className="home-subtitle">
         Making church parking stress-free, one notification at a time ✨
       </p>
       
       <div>
-        <button
-          style={styles.buttonPrimary}
-          onClick={() => onNavigate('driver-welcome')}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
-        >
-                      <span>Register My Vehicle</span>
+        <button className="button-primary" onClick={() => onNavigate('driver-welcome')}>
+          <span>Register My Vehicle</span>
           <ArrowRightIcon />
         </button>
         
-        <button
-          style={styles.buttonSecondary}
-          onClick={() => onNavigate('blocked-welcome')}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
-        >
+        <button className="button-secondary" onClick={() => onNavigate('blocked-welcome')}>
           <span>😤 I'm Blocked In</span>
           <ArrowRightIcon />
         </button>
         
-        <button
-          style={styles.buttonTertiary}
-          onClick={() => onNavigate('admin-login')}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#F5F5F5'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-        >
+        <button className="button-tertiary" onClick={() => onNavigate('admin-login')}>
           <span>Admin Dashboard</span>
           <LockIcon />
         </button>
@@ -454,20 +235,15 @@ const HomeScreen = ({ onNavigate }) => (
 
 // Welcome Screen Component
 const WelcomeScreen = ({ onStart, onBack, title, description, buttonText = "Get Started" }) => (
-  <div style={styles.container}>
-    <div style={styles.header}>
+  <div className="container">
+    <div className="header">
       <BackButton onClick={onBack} />
     </div>
-    <div style={styles.contentWrapper}>
-      <h1 style={styles.heading}>{title}</h1>
-      <p style={styles.subheading}>{description}</p>
+    <div className="content-wrapper">
+      <h1 className="heading">{title}</h1>
+      <p className="subheading">{description}</p>
       
-      <button
-        style={styles.buttonPrimary}
-        onClick={onStart}
-        onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
-        onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
-      >
+      <button className="button-primary" onClick={onStart}>
         <span>{buttonText}</span>
         <ArrowRightIcon />
       </button>
@@ -567,20 +343,14 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     }
   };
 
-  const buttonStyle = {
-    ...styles.buttonPrimary,
-    opacity: loading ? 0.6 : 1,
-    cursor: loading ? 'not-allowed' : 'pointer'
-  };
-
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="container">
+      <div className="header">
         <BackButton onClick={onBack} />
       </div>
-      <div style={styles.contentWrapper}>
-        <h1 style={styles.heading}>Let's Get You Registered!</h1>
-        <p style={styles.subheading}>
+      <div className="content-wrapper">
+        <h1 className="heading">Let's Get You Registered!</h1>
+        <p className="subheading">
           Just need a couple of quick details so we can reach you if someone needs to get out
         </p>
         
@@ -606,7 +376,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
             success={validFields.phone}
           />
           
-          <div style={styles.checkboxContainer}>
+          <div className="checkbox-container">
             <input
               type="checkbox"
               checked={consent}
@@ -614,23 +384,23 @@ const DriverRegistration = ({ onComplete, onBack }) => {
                 setConsent(e.target.checked);
                 setErrors(prev => ({ ...prev, consent: '' }));
               }}
-              style={styles.checkbox}
+              className="checkbox"
             />
-            <label style={styles.checkboxLabel}>
+            <label className="checkbox-label">
               I'm happy for you to store my details for today's service (we'll automatically delete them after 12 hours - promise!)
             </label>
           </div>
           
           {errors.consent && (
-            <div style={styles.errorMessage}>
+            <div className="error-message">
               <AlertIcon />
               <span>{errors.consent}</span>
             </div>
           )}
           
           {errors.submit && (
-            <div style={styles.errorContainer}>
-              <div style={styles.errorMessage}>
+            <div className="error-container">
+              <div className="error-message">
                 <AlertIcon />
                 <span>{errors.submit}</span>
               </div>
@@ -638,15 +408,11 @@ const DriverRegistration = ({ onComplete, onBack }) => {
           )}
         </div>
         
-        <button
-          style={buttonStyle}
-          onClick={handleSubmit}
-          disabled={loading}
-        >
+        <button className="button-primary" onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
               <span>Getting you registered...</span>
-              <div style={styles.loadingSpinner}></div>
+              <div className="loading-spinner"></div>
             </>
           ) : (
             <>
@@ -675,13 +441,13 @@ const AdminLogin = ({ onLogin, onBack }) => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="container">
+      <div className="header">
         <BackButton onClick={onBack} />
       </div>
-      <div style={styles.contentWrapper}>
-        <div style={styles.loginForm}>
-          <h2 style={{ ...styles.heading, fontSize: '24px', marginBottom: '24px' }}>Admin Access</h2>
+      <div className="content-wrapper">
+        <div className="login-form">
+          <h2 className="heading" style={{ fontSize: '24px', marginBottom: '24px' }}>Admin Access</h2>
           <div>
             <InputField
               label="Password"
@@ -695,10 +461,7 @@ const AdminLogin = ({ onLogin, onBack }) => {
               placeholder="Enter admin password"
               error={error}
             />
-            <button 
-              onClick={handleSubmit}
-              style={styles.buttonPrimary}
-            >
+            <button onClick={handleSubmit} className="button-primary">
               <span>Login</span>
               <ArrowRightIcon />
             </button>
@@ -709,13 +472,19 @@ const AdminLogin = ({ onLogin, onBack }) => {
   );
 };
 
-// Admin Dashboard Component
+// Enhanced Admin Dashboard Component
 const AdminDashboard = ({ onBack }) => {
   const [registrations, setRegistrations] = useState([]);
+  const [filteredRegistrations, setFilteredRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sendingTo, setSendingTo] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const fetchRegistrations = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('registrations')
@@ -724,15 +493,39 @@ const AdminDashboard = ({ onBack }) => {
       
       if (error) throw error;
       setRegistrations(data || []);
+      setFilteredRegistrations(data || []);
     } catch (error) {
       console.error('Error fetching registrations:', error);
+      setToast({ message: 'Failed to fetch registrations', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const sendNotification = async (phone, reg) => {
-    setSendingTo(phone);
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    if (!term) {
+      setFilteredRegistrations(registrations);
+    } else {
+      const filtered = registrations.filter(reg => 
+        reg.reg.toLowerCase().includes(term.toLowerCase()) ||
+        reg.phone.includes(term)
+      );
+      setFilteredRegistrations(filtered);
+    }
+  };
+
+  const confirmSendNotification = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowModal(true);
+  };
+
+  const sendNotification = async () => {
+    if (!selectedVehicle) return;
+    
+    setShowModal(false);
+    setSendingTo(selectedVehicle.phone);
+    
     try {
       await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
         method: 'POST',
@@ -741,17 +534,28 @@ const AdminDashboard = ({ onBack }) => {
           'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
-          phone,
-          message: `Hi there! Your vehicle ${reg} might be blocking someone in. Could you please check and move it if needed? Thanks so much! - MoveMate`
+          phone: selectedVehicle.phone,
+          message: `Your vehicle ${selectedVehicle.reg} may be blocking others. Please check and move if necessary. – MoveMate Team`
         })
       });
-      alert('Notification sent successfully!');
+      setToast({ message: `Notification sent to ${selectedVehicle.reg}`, type: 'success' });
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to send notification. Please try again.');
+      setToast({ message: 'Failed to send notification', type: 'error' });
     } finally {
       setSendingTo(null);
+      setSelectedVehicle(null);
     }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   };
 
   useEffect(() => {
@@ -759,86 +563,120 @@ const AdminDashboard = ({ onBack }) => {
   }, []);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="container">
+      <div className="header">
         <BackButton onClick={onBack} text="Back to Home" />
       </div>
-      <div style={styles.adminContainer}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h1 style={styles.heading}>Registered Vehicles</h1>
-          <button 
-            onClick={fetchRegistrations}
-            style={{ ...styles.buttonPrimary, width: 'auto', padding: '12px 16px', fontSize: '14px' }}
-          >
-            Refresh
-          </button>
+      
+      <div className="admin-container">
+        <div className="admin-header">
+          <h1 className="heading" style={{ margin: 0 }}>Marshal Dashboard</h1>
+          
+          <div className="admin-controls">
+            <div className="search-container">
+              <SearchIcon className="search-icon" />
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search by registration..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
+            
+            <button onClick={fetchRegistrations} className="refresh-button">
+              <RefreshIcon />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
         
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={styles.loadingSpinner}></div>
+          <div className="empty-state">
+            <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
           </div>
-        ) : registrations.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-            <p>No vehicles registered yet</p>
+        ) : filteredRegistrations.length === 0 ? (
+          <div className="empty-state">
+            <CarIcon className="empty-icon" />
+            <p>{searchTerm ? 'No vehicles found matching your search' : 'No vehicles registered yet'}</p>
           </div>
         ) : (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.tableHeader}>Vehicle Reg</th>
-                <th style={styles.tableHeader}>Phone</th>
-                <th style={styles.tableHeader}>Registered Time</th>
-                <th style={styles.tableHeader}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {registrations.map((reg) => (
-                <tr key={reg.id}>
-                  <td style={styles.tableCell}>{reg.reg}</td>
-                  <td style={styles.tableCell}>{reg.phone}</td>
-                  <td style={styles.tableCell}>
-                    {new Date(reg.created_at).toLocaleString()}
-                  </td>
-                  <td style={styles.tableCell}>
-                    <button
-                      style={styles.notifyButton}
-                      onClick={() => sendNotification(reg.phone, reg.reg)}
-                      disabled={sendingTo === reg.phone}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
-                    >
-                      {sendingTo === reg.phone ? 'Sending...' : 'Notify'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="vehicle-grid">
+            {filteredRegistrations.map((reg) => (
+              <div key={reg.id} className="vehicle-card">
+                <div className="vehicle-reg">
+                  <CarIcon style={{ width: '24px', height: '24px' }} />
+                  {reg.reg}
+                </div>
+                
+                <div className="vehicle-info">
+                  <div className="info-row">
+                    <PhoneIcon style={{ width: '16px', height: '16px' }} />
+                    <span>{maskPhoneNumber(reg.phone)}</span>
+                  </div>
+                  
+                  <div className="info-row">
+                    <ClockIcon />
+                    <span>{formatTime(reg.created_at)} • {formatDate(reg.created_at)}</span>
+                  </div>
+                </div>
+                
+                <button
+                  className="notify-button"
+                  onClick={() => confirmSendNotification(reg)}
+                  disabled={sendingTo === reg.phone}
+                >
+                  {sendingTo === reg.phone ? (
+                    <>
+                      <div className="loading-spinner" style={{ borderTopColor: 'white' }}></div>
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <SendIcon />
+                      <span>Send Move Request</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+      
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={sendNotification}
+        title="Send Move Request?"
+        message={`Are you sure you want to send a move request to vehicle ${selectedVehicle?.reg}?`}
+        confirmText="Send Notification"
+      />
+      
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
 
 // Success Screen Component
 const SuccessScreen = ({ onFinish, title, message }) => (
-  <div style={styles.container}>
-    <div style={styles.contentWrapper}>
-      <div style={styles.successContainer}>
-        <div style={styles.successIconContainer}>
+  <div className="container">
+    <div className="content-wrapper">
+      <div className="success-container">
+        <div className="success-icon-container">
           <CheckIcon style={{ width: '40px', height: '40px', color: '#34C759' }} />
         </div>
-        <h1 style={styles.heading}>{title}</h1>
-        <p style={styles.subheading}>{message}</p>
+        <h1 className="heading">{title}</h1>
+        <p className="subheading">{message}</p>
       </div>
       
-      <button
-        style={styles.buttonPrimary}
-        onClick={onFinish}
-        onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
-        onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
-      >
+      <button className="button-primary" onClick={onFinish}>
         <span>Perfect!</span>
         <CheckIcon />
       </button>
@@ -884,13 +722,13 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="container">
+      <div className="header">
         <BackButton onClick={onBack} />
       </div>
-      <div style={styles.contentWrapper}>
-        <h1 style={styles.heading}>Oh No! Blocked In?</h1>
-        <p style={styles.subheading}>
+      <div className="content-wrapper">
+        <h1 className="heading">Oh No! Blocked In?</h1>
+        <p className="subheading">
           Don't worry - we've got you covered! Just tell us which car is blocking you and we'll get them sorted
         </p>
         
@@ -908,19 +746,11 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
           />
         </div>
         
-        <button
-          style={{
-            ...styles.buttonPrimary,
-            opacity: loading ? 0.6 : 1,
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-          onClick={handleSubmit}
-          disabled={loading}
-        >
+        <button className="button-primary" onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
               <span>Sending notification...</span>
-              <div style={styles.loadingSpinner}></div>
+              <div className="loading-spinner"></div>
             </>
           ) : (
             <>
@@ -937,20 +767,6 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
 // Main App Component
 const App = () => {
   const [view, setView] = useState('home');
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-
-  // Add CSS animation for spinner
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, []);
 
   const renderView = () => {
     switch (view) {
