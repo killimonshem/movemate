@@ -42,6 +42,275 @@ const maskPhoneNumber = (phone) => {
   return phone.substring(0, phone.length - 7) + '***' + phone.substring(phone.length - 4);
 };
 
+// Styles object
+const styles = {
+  container: {
+    minHeight: '100vh',
+    backgroundColor: '#ffffff',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '20px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '20px',
+    paddingTop: '10px'
+  },
+  backButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px 16px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '8px',
+    color: '#007AFF',
+    fontSize: '16px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  contentWrapper: {
+    maxWidth: '400px',
+    margin: '0 auto',
+    width: '100%',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center'
+  },
+  heading: {
+    fontSize: '32px',
+    fontWeight: '600',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: '8px',
+    lineHeight: '1.2'
+  },
+  subheading: {
+    fontSize: '18px',
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: '48px',
+    lineHeight: '1.4'
+  },
+  homeTitle: {
+    fontSize: '42px',
+    fontWeight: '700',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: '16px'
+  },
+  homeSubtitle: {
+    fontSize: '20px',
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: '48px'
+  },
+  buttonPrimary: {
+    width: '100%',
+    backgroundColor: '#007AFF',
+    color: 'white',
+    padding: '18px 24px',
+    borderRadius: '12px',
+    border: 'none',
+    fontSize: '18px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    transition: 'all 0.2s ease',
+    marginBottom: '16px'
+  },
+  buttonSecondary: {
+    width: '100%',
+    backgroundColor: '#f5f5f5',
+    color: '#1a1a1a',
+    padding: '18px 24px',
+    borderRadius: '12px',
+    border: 'none',
+    fontSize: '18px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    transition: 'all 0.2s ease',
+    marginBottom: '16px'
+  },
+  buttonTertiary: {
+    width: '100%',
+    backgroundColor: 'white',
+    color: '#666666',
+    padding: '16px 24px',
+    borderRadius: '12px',
+    border: '1px solid #e5e5e5',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  inputContainer: {
+    marginBottom: '24px'
+  },
+  label: {
+    display: 'block',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#1a1a1a',
+    marginBottom: '8px'
+  },
+  inputWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  input: {
+    width: '100%',
+    padding: '16px 16px 16px 48px',
+    border: '1px solid #e5e5e5',
+    borderRadius: '12px',
+    fontSize: '18px',
+    backgroundColor: 'white',
+    outline: 'none',
+    transition: 'all 0.2s ease',
+    boxSizing: 'border-box'
+  },
+  inputFocus: {
+    borderColor: '#007AFF',
+    boxShadow: '0 0 0 3px rgba(0, 122, 255, 0.1)'
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+    backgroundColor: '#FFF5F5'
+  },
+  inputSuccess: {
+    borderColor: '#34C759',
+    backgroundColor: '#F0FFF4'
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: '16px',
+    width: '20px',
+    height: '20px',
+    color: '#666666',
+    zIndex: 1
+  },
+  successIcon: {
+    position: 'absolute',
+    right: '16px',
+    width: '20px',
+    height: '20px',
+    color: '#34C759'
+  },
+  errorMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#FF3B30',
+    fontSize: '14px',
+    marginTop: '8px'
+  },
+  checkboxContainer: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '12px',
+    marginBottom: '24px'
+  },
+  checkbox: {
+    width: '20px',
+    height: '20px',
+    marginTop: '2px',
+    accentColor: '#007AFF'
+  },
+  checkboxLabel: {
+    fontSize: '14px',
+    color: '#666666',
+    lineHeight: '1.4'
+  },
+  successContainer: {
+    textAlign: 'center',
+    marginBottom: '48px'
+  },
+  successIconContainer: {
+    width: '80px',
+    height: '80px',
+    backgroundColor: '#E8F5E8',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 24px'
+  },
+  loadingSpinner: {
+    width: '20px',
+    height: '20px',
+    border: '2px solid transparent',
+    borderTop: '2px solid white',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  errorContainer: {
+    backgroundColor: '#FFF5F5',
+    border: '1px solid #FFD1D1',
+    borderRadius: '12px',
+    padding: '16px',
+    marginBottom: '24px'
+  },
+  adminContainer: {
+    maxWidth: '800px',
+    margin: '0 auto',
+    padding: '20px'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginTop: '20px',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+  },
+  tableHeader: {
+    backgroundColor: '#f8f9fa',
+    padding: '12px',
+    textAlign: 'left',
+    fontWeight: '600',
+    fontSize: '14px',
+    color: '#495057',
+    borderBottom: '1px solid #e9ecef'
+  },
+  tableCell: {
+    padding: '12px',
+    borderBottom: '1px solid #e9ecef',
+    fontSize: '14px'
+  },
+  notifyButton: {
+    backgroundColor: '#007AFF',
+    color: 'white',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  loginForm: {
+    backgroundColor: 'white',
+    padding: '32px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    maxWidth: '300px',
+    margin: '0 auto'
+  }
+};
+
 // Icon Components
 const CarIcon = ({ className = '' }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +419,12 @@ const Modal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Conf
 
 // Back Button Component
 const BackButton = ({ onClick, text = "Back" }) => (
-  <button className="back-button" onClick={onClick}>
+  <button 
+    style={styles.backButton} 
+    onClick={onClick}
+    onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+  >
     <ArrowLeftIcon />
     <span>{text}</span>
   </button>
@@ -168,7 +442,7 @@ const InputField = ({
   success,
   ...props 
 }) => {
-  const [focused, setFocused] = useState(false);
+  // const [focused, setFocused] = useState(false);
   
   const getInputClassName = () => {
     let className = 'input';
@@ -186,8 +460,8 @@ const InputField = ({
           type={type}
           value={value}
           onChange={onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          // onFocus={() => setFocused(true)}
+          // onBlur={() => setFocused(false)}
           placeholder={placeholder}
           className={getInputClassName()}
           {...props}
@@ -206,25 +480,40 @@ const InputField = ({
 
 // Home Screen Component
 const HomeScreen = ({ onNavigate }) => (
-  <div className="container">
-    <div className="content-wrapper">
-      <h1 className="home-title">MoveMate</h1>
-      <p className="home-subtitle">
+  <div style={styles.container}>
+    <div style={styles.contentWrapper}>
+      <h1 style={styles.homeTitle}>MoveMate</h1>
+      <p style={styles.homeSubtitle}>
         Making church parking stress-free, one notification at a time ✨
       </p>
       
       <div>
-        <button className="button-primary" onClick={() => onNavigate('driver-welcome')}>
+        <button
+          style={styles.buttonPrimary}
+          onClick={() => onNavigate('driver-welcome')}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
+        >
           <span>Register My Vehicle</span>
           <ArrowRightIcon />
         </button>
         
-        <button className="button-secondary" onClick={() => onNavigate('blocked-welcome')}>
+        <button
+          style={styles.buttonSecondary}
+          onClick={() => onNavigate('blocked-welcome')}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
+        >
           <span>😤 I'm Blocked In</span>
           <ArrowRightIcon />
         </button>
         
-        <button className="button-tertiary" onClick={() => onNavigate('admin-login')}>
+        <button
+          style={styles.buttonTertiary}
+          onClick={() => onNavigate('admin-login')}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#F5F5F5'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+        >
           <span>Admin Dashboard</span>
           <LockIcon />
         </button>
@@ -235,13 +524,13 @@ const HomeScreen = ({ onNavigate }) => (
 
 // Welcome Screen Component
 const WelcomeScreen = ({ onStart, onBack, title, description, buttonText = "Get Started" }) => (
-  <div className="container">
-    <div className="header">
+  <div style={styles.container}>
+    <div style={styles.header}>
       <BackButton onClick={onBack} />
     </div>
-    <div className="content-wrapper">
-      <h1 className="heading">{title}</h1>
-      <p className="subheading">{description}</p>
+    <div style={styles.contentWrapper}>
+      <h1 style={styles.heading}>{title}</h1>
+      <p style={styles.subheading}>{description}</p>
       
       <button className="button-primary" onClick={onStart}>
         <span>{buttonText}</span>
@@ -344,13 +633,13 @@ const DriverRegistration = ({ onComplete, onBack }) => {
   };
 
   return (
-    <div className="container">
-      <div className="header">
+    <div style={styles.container}>
+      <div style={styles.header}>
         <BackButton onClick={onBack} />
       </div>
-      <div className="content-wrapper">
-        <h1 className="heading">Let's Get You Registered!</h1>
-        <p className="subheading">
+      <div style={styles.contentWrapper}>
+        <h1 style={styles.heading}>Let's Get You Registered!</h1>
+        <p style={styles.subheading}>
           Just need a couple of quick details so we can reach you if someone needs to get out
         </p>
         
@@ -386,7 +675,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
               }}
               className="checkbox"
             />
-            <label className="checkbox-label">
+            <label style={styles.checkboxLabel}>
               I'm happy for you to store my details for today's service (we'll automatically delete them after 12 hours - promise!)
             </label>
           </div>
@@ -412,7 +701,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
           {loading ? (
             <>
               <span>Getting you registered...</span>
-              <div className="loading-spinner"></div>
+              <div style={styles.loadingSpinner}></div>
             </>
           ) : (
             <>
@@ -441,13 +730,13 @@ const AdminLogin = ({ onLogin, onBack }) => {
   };
 
   return (
-    <div className="container">
-      <div className="header">
+    <div style={styles.container}>
+      <div style={styles.header}>
         <BackButton onClick={onBack} />
       </div>
-      <div className="content-wrapper">
-        <div className="login-form">
-          <h2 className="heading" style={{ fontSize: '24px', marginBottom: '24px' }}>Admin Access</h2>
+      <div style={styles.contentWrapper}>
+        <div style={styles.loginForm}>
+          <h2 style={{ ...styles.heading, fontSize: '24px', marginBottom: '24px' }}>Admin Access</h2>
           <div>
             <InputField
               label="Password"
@@ -461,7 +750,10 @@ const AdminLogin = ({ onLogin, onBack }) => {
               placeholder="Enter admin password"
               error={error}
             />
-            <button onClick={handleSubmit} className="button-primary">
+            <button 
+              onClick={handleSubmit}
+              style={styles.buttonPrimary}
+            >
               <span>Login</span>
               <ArrowRightIcon />
             </button>
@@ -676,7 +968,12 @@ const SuccessScreen = ({ onFinish, title, message }) => (
         <p className="subheading">{message}</p>
       </div>
       
-      <button className="button-primary" onClick={onFinish}>
+      <button
+        style={styles.buttonPrimary}
+        onClick={onFinish}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
+      >
         <span>Perfect!</span>
         <CheckIcon />
       </button>
@@ -722,13 +1019,13 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
   };
 
   return (
-    <div className="container">
-      <div className="header">
+    <div style={styles.container}>
+      <div style={styles.header}>
         <BackButton onClick={onBack} />
       </div>
-      <div className="content-wrapper">
-        <h1 className="heading">Oh No! Blocked In?</h1>
-        <p className="subheading">
+      <div style={styles.contentWrapper}>
+        <h1 style={styles.heading}>Oh No! Blocked In?</h1>
+        <p style={styles.subheading}>
           Don't worry - we've got you covered! Just tell us which car is blocking you and we'll get them sorted
         </p>
         
@@ -746,11 +1043,19 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
           />
         </div>
         
-        <button className="button-primary" onClick={handleSubmit} disabled={loading}>
+        <button
+          style={{
+            ...styles.buttonPrimary,
+            opacity: loading ? 0.6 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+          onClick={handleSubmit}
+          disabled={loading}
+        >
           {loading ? (
             <>
               <span>Sending notification...</span>
-              <div className="loading-spinner"></div>
+              <div style={styles.loadingSpinner}></div>
             </>
           ) : (
             <>
@@ -767,6 +1072,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
 // Main App Component
 const App = () => {
   const [view, setView] = useState('home');
+  // const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   const renderView = () => {
     switch (view) {
