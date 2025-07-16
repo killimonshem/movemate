@@ -399,8 +399,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
   const [vehicleError, setVehicleError] = useState('');
   const debounceRef = useRef();
 
-  const DVLA_PROXY_URL = 'http://localhost:4000/api/vehicle-enquiry';
-  const DVLA_API_KEY = "QTKIjEAk5c8AitDQMdjrT3OLcFKuG6qj179J1Ge7";
+  const DVLA_PROXY_URL = process.env.REACT_APP_DVLA_PROXY_URL || 'http://localhost:4000/api/vehicle-enquiry';
     const MOCK_REGISTRATIONS = {
     'AB12CDE': { colour: 'BLACK', make: 'BMW', model: '3 Series', registrationNumber: 'AB12CDE' },
     'CD34EFG': { colour: 'WHITE', make: 'FORD', model: 'Fiesta', registrationNumber: 'CD34EFG' },
@@ -442,7 +441,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     }
     setVehicleLoading(true);
     try {
-      console.log('Calling DVLA API for:', regClean, 'with key:', DVLA_API_KEY);
+      console.log('Calling DVLA API for:', regClean);
       const res = await fetch(DVLA_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
