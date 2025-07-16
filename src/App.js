@@ -567,7 +567,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     setLoading(true);
     
     try {
-      // Check for existing registration for this reg today
+      // Check for existing registration for this reg todayy
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
