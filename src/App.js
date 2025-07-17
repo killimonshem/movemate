@@ -399,7 +399,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
   const [vehicleError, setVehicleError] = useState('');
   const debounceRef = useRef();
 
-  const DVLA_PROXY_URL = process.env.REACT_APP_DVLA_PROXY_URL || 'http://localhost:4000/api/vehicle-enquiry';
+  const DVLA_PROXY_URL = process.env.REACT_APP_DVLA_PROXY_URL || '/api/vehicle-enquiry';
     const MOCK_REGISTRATIONS = {
     'AB12CDE': { colour: 'BLACK', make: 'BMW', model: '3 Series', registrationNumber: 'AB12CDE' },
     'CD34EFG': { colour: 'WHITE', make: 'FORD', model: 'Fiesta', registrationNumber: 'CD34EFG' },
