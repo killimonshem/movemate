@@ -287,7 +287,7 @@ const HomeScreen = ({ onNavigate }) => {
             onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
             onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
           >
-            <span>I'm Blocked In</span>
+            <span>I've Been Blocked In</span>
             <ArrowRightIcon />
           </button>
         </div>
@@ -371,7 +371,7 @@ const DetailsConfirmationScreen = ({ details, onConfirm, onEdit, onBack }) => (
             onClick={onConfirm}
             type="button"
           >
-            <span>Yes, that's correct</span>
+            <span>Yes, they're correct</span>
             <ArrowRightIcon aria-hidden="true" />
           </button>
         </div>
@@ -616,7 +616,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
           },
           body: JSON.stringify({
             phone: formatPhoneNumber(phone),
-            message: `You're all set! Your vehicle ${reg.toUpperCase().replace(/\s/g, '')}${venueText} is now registered with MoveMate. We'll give you a heads up if you need to move it. Thanks for helping keep our parking smooth!`,
+            message: `You're all set! Your vehicle ${reg.toUpperCase().replace(/\s/g, '')}${venueText} is now registered with MoveMate. We'll let you know if you need to move it. Thank you for helping to keep our parking running smoothly!`,
             from: 'MOVEMATE'
           })
         });
@@ -814,12 +814,12 @@ const DriverRegistration = ({ onComplete, onBack }) => {
         <button className="button-primary" onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
-              <span>Getting you registered...</span>
+              <span>Registering your vehicle…</span>
               <div className="loading-spinner"></div>
             </>
           ) : (
             <>
-              <span>Register My Vehicle</span>
+              <span>Register my vehicle</span>
               <ArrowRightIcon />
             </>
           )}
@@ -841,7 +841,7 @@ const AdminLogin = ({ onLogin, onBack }) => {
 
   const handleSubmit = async () => {
     if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password');
+      setError('Please enter both a username and a password.');
       return;
     }
 
@@ -923,7 +923,7 @@ const AdminLogin = ({ onLogin, onBack }) => {
               disabled={loading}
               className="button-primary"
             >
-              <span>{loading ? 'Logging in...' : 'Login'}</span>
+              <span>{loading ? 'Logging in...' : 'Log in'}</span>
               {!loading && <ArrowRightIcon />}
             </button>
           </div>
@@ -971,8 +971,8 @@ const AdminDashboard = ({ onBack }) => {
       setDataError(null);
     } catch (error) {
       console.error('Error fetching venues:', error);
-      setDataError('Failed to fetch venues');
-      setToast({ message: 'Failed to fetch venues', type: 'error' });
+      setDataError('Failed to fetch venues.');
+      setToast({ message: 'Failed to fetch venues.', type: 'error' });
     } finally {
       setLoadingVenues(false);
     }
@@ -1104,7 +1104,7 @@ const AdminDashboard = ({ onBack }) => {
         },
         body: JSON.stringify({
           phone: selectedVehicle.phone,
-          message: `Your vehicle ${selectedVehicle.reg}${venueText} may be blocking others. Please check and move if necessary. – MoveMate Team`,
+          message: `Your vehicle ${selectedVehicle.reg}${venueText} may be blocking others. Please check and move it if necessary. – MoveMate Team`,
           from: 'MOVEMATE'
         })
       });
@@ -1396,7 +1396,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
 
   const handleSubmit = async () => {
     if (!validateUKReg(reg)) {
-      setError('Please enter a valid UK registration number');
+      setError('Please enter a valid UK registration number.');
       return;
     }
     
@@ -1419,7 +1419,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
       onComplete();
     } catch (error) {
       console.error('Error:', error);
-      setError('Couldn\'t send the notification right now. Please try again or find someone to help!');
+      setError('We couldn’t send the notification right now. Please try again or ask someone for assistance.');
     } finally {
       setLoading(false);
     }
@@ -1431,14 +1431,14 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
         <BackButton onClick={onBack} />
       </div>
       <div className="content-wrapper">
-        <h1 className="heading">Oh No! Blocked In?</h1>
+        <h1 className="heading">Oh no! Blocked in?</h1>
         <p className="subheading">
-          Don't worry - we've got you covered! Just tell us which car is blocking you and we'll get them sorted
+          Don't worry – we've got you covered! Just tell us which car is blocking you and we'll handle the rest sorted.
         </p>
         
         <div>
           <InputField
-            label="What's the registration of the car that's blocking you?"
+            label="What is the registration of the car that is blocking you?"
             icon={CarIcon}
             value={reg}
             onChange={(e) => {
@@ -1462,7 +1462,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
             </>
           ) : (
             <>
-              <span>Send Notification</span>
+              <span>Send notification</span>
               <ArrowRightIcon />
             </>
           )}
@@ -1484,11 +1484,11 @@ const App = () => {
       case 'driver-welcome':
         return (
           <WelcomeScreen
-            title="Hey There!"
-            description="Thanks for joining us today! Let's get your car registered so we can give you a friendly nudge if someone needs to get out."
+            title="Hello!"
+            description="Thank you for joining us today! Let’s get your car registered so we can give you a polite nudge if someone needs to leave."
             onStart={() => setView('driver-register')}
             onBack={() => setView('home')}
-            buttonText="Let's Do This!"
+            buttonText="Let’s do this!"
           />
         );
       
@@ -1498,8 +1498,8 @@ const App = () => {
       case 'driver-confirm':
         return (
           <SuccessScreen
-            title="You're All Set!"
-            message="Your vehicle is now registered and you should have received a confirmation text. If someone needs to get out, we'll give you a friendly heads up. Thanks for helping keep our parking smooth!"
+            title="You’re all set!"
+            message="Your vehicle is now registered and you should have received a confirmation text. If someone needs to leave, we’ll give you a polite heads up. Thank you for helping keep our parking running smoothly!"
             onFinish={() => setView('home')}
           />
         );
@@ -1507,11 +1507,11 @@ const App = () => {
       case 'blocked-welcome':
         return (
           <WelcomeScreen
-            title="Stuck Behind Someone?"
-            description="We've all been there! No worries - just let us know which car is blocking you and we'll get them moving."
+            title="Stuck behind someone?"
+            description="We’ve all been there! No worries – just let us know which car is blocking you and we’ll get them moving."
             onStart={() => setView('blocked-input')}
             onBack={() => setView('home')}
-            buttonText="Get Me Out!"
+            buttonText="Get me out!"
           />
         );
       
@@ -1521,8 +1521,8 @@ const App = () => {
       case 'blocked-confirm':
         return (
           <SuccessScreen
-            title="Help is on the Way!"
-            message="We've sent a friendly message to the driver. They should be moving their car shortly. Thanks for your patience!"
+            title="Help is on the way!"
+            message="We’ve sent a polite message to the driver. They should be moving their car shortly. Thank you for your patience!"
             onFinish={() => setView('home')}
           />
         );
