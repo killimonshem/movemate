@@ -765,7 +765,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
               className="checkbox"
             />
             <label className="checkbox-label">
-              I'm happy for you to store my details for today's service (we'll automatically delete them after 12 hours - promise!)
+            Yes, use my details for today's parking validation (deleted automatically after today)
             </label>
           </div>
           
