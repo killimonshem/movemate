@@ -835,15 +835,49 @@ const DriverRegistration = ({ onComplete, onBack }) => {
 
 // Admin Login Component
 const AdminLogin = ({ onLogin, onBack }) => {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    // Simple password check - in production, use proper authentication
-    if (password === 'admin123') {
-      onLogin();
-    } else {
-      setError('Incorrect password');
+  const handleSubmit = async () => {
+    if (!username.trim() || !password.trim()) {
+      setError('Please enter both username and password');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Query the super_admins table to validate credentials
+      const { data, error } = await supabase
+        .from('super_admins')
+        .select('*')
+        .eq('username', username.trim())
+        .eq('password', password)
+        .single();
+
+      if (error) {
+        console.error('Admin authentication error:', error);
+        setError('Authentication failed');
+      } else if (data) {
+        // Valid admin credentials
+        onLogin();
+      } else {
+        setError('Invalid username or password');
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
     }
   };
 
@@ -857,6 +891,19 @@ const AdminLogin = ({ onLogin, onBack }) => {
           <h2 className="heading" style={{ fontSize: '24px', marginBottom: '24px' }}>Admin Access</h2>
           <div>
             <InputField
+              label="Username"
+              icon={LockIcon}
+              type="text"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setError('');
+              }}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter admin username"
+              error={error}
+            />
+            <InputField
               label="Password"
               icon={LockIcon}
               type="password"
@@ -865,15 +912,17 @@ const AdminLogin = ({ onLogin, onBack }) => {
                 setPassword(e.target.value);
                 setError('');
               }}
+              onKeyPress={handleKeyPress}
               placeholder="Enter admin password"
               error={error}
             />
             <button 
               onClick={handleSubmit}
+              disabled={loading}
               className="button-primary"
             >
-              <span>Login</span>
-              <ArrowRightIcon />
+              <span>{loading ? 'Logging in...' : 'Login'}</span>
+              {!loading && <ArrowRightIcon />}
             </button>
           </div>
         </div>
