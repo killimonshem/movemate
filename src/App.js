@@ -416,12 +416,17 @@ const DriverRegistration = ({ onComplete, onBack }) => {
   const fetchVenues = async () => {
     setLoadingVenues(true);
     try {
-      const { data, error } = await supabase
-        .from('venues')
-        .select('*')
-        .order('name', { ascending: true });
+      const response = await fetch(`${supabaseUrl}/functions/v1/fetch-venues`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch venues');
       
-      if (error) throw error;
+      const { data } = await response.json();
       setVenues(data || []);
     } catch (error) {
       console.error('Error fetching venues:', error);
@@ -538,22 +543,31 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     // Check for existing registration for this reg today BEFORE confirmation
     setLoading(true);
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      const { data: existing, error: existingError } = await supabase
-        .from('registrations')
-        .select('id')
-        .eq('reg', reg.toUpperCase().replace(/\s/g, ''))
-        .gte('created_at', today.toISOString())
-        .lt('created_at', tomorrow.toISOString());
-      if (existingError) throw existingError;
-      if (existing && existing.length > 0) {
+      const response = await fetch(`${supabaseUrl}/functions/v1/register-vehicle`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reg: reg.toUpperCase().replace(/\s/g, ''),
+          phone: formatPhoneNumber(phone),
+          venue_id: selectedVenue,
+          vehicle_data: vehicleData
+        })
+      });
+
+      if (response.status === 409) {
         setErrors({ reg: 'This vehicle is already registered today.' });
         setLoading(false);
         return;
       }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
       setShowConfirmation(true);
     } catch (error) {
       setErrors({ submit: 'Oops! Something went wrong. Mind giving it another try?' });
@@ -566,41 +580,25 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     setLoading(true);
     
     try {
-      // Check for existing registration for this reg todayy
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      const { data: existing, error: existingError } = await supabase
-        .from('registrations')
-        .select('id')
-        .eq('reg', reg.toUpperCase().replace(/\s/g, ''))
-        .gte('created_at', today.toISOString())
-        .lt('created_at', tomorrow.toISOString());
-      if (existingError) throw existingError;
-      if (existing && existing.length > 0) {
-        setErrors({ reg: 'This vehicle is already registered today.' });
-        setLoading(false);
-        setShowConfirmation(false);
-        return;
-      }
+      // The registration was already checked in handleSubmit, so we can proceed
+      const response = await fetch(`${supabaseUrl}/functions/v1/register-vehicle`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reg: reg.toUpperCase().replace(/\s/g, ''),
+          phone: formatPhoneNumber(phone),
+          venue_id: selectedVenue,
+          vehicle_data: vehicleData
+        })
+      });
 
-      const registrationInsert = {
-        reg: reg.toUpperCase().replace(/\s/g, ''),
-        phone: formatPhoneNumber(phone),
-        venue_id: selectedVenue,
-        consent_timestamp: new Date().toISOString()
-      };
-      if (vehicleData) {
-        registrationInsert.vehicle_data = vehicleData;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
       }
-      const { error } = await supabase
-        .from('registrations')
-        .insert([
-          registrationInsert
-        ]);
-      
-      if (error) throw error;
       
       try {
         // Get venue name for personalization
@@ -840,6 +838,9 @@ const AdminLogin = ({ onLogin, onBack }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Simple SHA-256 hash function for password (client-side, for demo only)
+
+
   const handleSubmit = async () => {
     if (!username.trim() || !password.trim()) {
       setError('Please enter both username and password');
@@ -850,22 +851,25 @@ const AdminLogin = ({ onLogin, onBack }) => {
     setError('');
 
     try {
-      // Query the super_admins table to validate credentials
-      const { data, error } = await supabase
-        .from('super_admins')
-        .select('*')
-        .eq('username', username.trim())
-        .eq('password', password)
-        .single();
+      // Call the admin authentication Edge Function
+      const response = await fetch(`${supabaseUrl}/functions/v1/admin-auth`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim()
+        })
+      });
 
-      if (error) {
-        console.error('Admin authentication error:', error);
-        setError('Authentication failed');
-      } else if (data) {
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Authentication failed');
+      } else {
         // Valid admin credentials
         onLogin();
-      } else {
-        setError('Invalid username or password');
       }
     } catch (error) {
       console.error('Admin login error:', error);
@@ -954,12 +958,17 @@ const AdminDashboard = ({ onBack }) => {
   const fetchVenues = async () => {
     setLoadingVenues(true);
     try {
-      const { data, error } = await supabase
-        .from('venues')
-        .select('*')
-        .order('name', { ascending: true });
+      const response = await fetch(`${supabaseUrl}/functions/v1/fetch-venues`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch venues');
       
-      if (error) throw error;
+      const { data } = await response.json();
       setVenues(data || []);
       setDataError(null);
     } catch (error) {
@@ -974,32 +983,24 @@ const AdminDashboard = ({ onBack }) => {
   const fetchRegistrations = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('registrations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      // Filter by venue if selected
+      const url = new URL(`${supabaseUrl}/functions/v1/fetch-registrations`);
       if (selectedVenue) {
-        query = query.eq('venue_id', selectedVenue);
+        url.searchParams.set('venue_id', selectedVenue);
       }
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch registrations');
       
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      // Sanitize and validate data
-      const registrationsData = (data || []).map(reg => ({
-        id: reg.id,
-        reg: reg.reg || '',
-        phone: reg.phone || '',
-        venue_id: reg.venue_id || '',
-        created_at: reg.created_at || new Date().toISOString(),
-        consent_timestamp: reg.consent_timestamp || null
-      })).filter(reg => reg.reg && reg.phone); // Only show valid registrations
-      
-      setRegistrations(registrationsData);
-      setFilteredRegistrations(registrationsData);
+      const { data } = await response.json();
+      setRegistrations(data || []);
+      setFilteredRegistrations(data || []);
       setDataError(null);
     } catch (error) {
       console.error('Error fetching registrations:', error);
@@ -1353,8 +1354,6 @@ const AdminDashboard = ({ onBack }) => {
         confirmText="Send Notification"
       />
       
-
-      
       {toast && (
         <Toast
           message={toast.message}
@@ -1365,9 +1364,6 @@ const AdminDashboard = ({ onBack }) => {
     </div>
   );
 };
-
-// Admin Settings Component
-
 
 // Success Screen Component
 const SuccessScreen = ({ onFinish, title, message }) => (
