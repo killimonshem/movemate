@@ -267,7 +267,7 @@ const HomeScreen = ({ onNavigate }) => {
           MoveMate
         </h1>
         <p className="home-subtitle">
-          Making church parking stress-free, one notification at a time
+        Help us keep parking smooth for everyone - validate your spot today
         </p>
         
         <div>
@@ -538,9 +538,15 @@ const DriverRegistration = ({ onComplete, onBack }) => {
       return;
     }
 
-    // Check for existing registration for this reg today BEFORE confirmation
+    // Only show confirmation screen, do not register yet
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmSubmit = async () => {
     setLoading(true);
+    setErrors({});
     try {
+      // Check for existing registration for this reg today
       const response = await fetch(`${supabaseUrl}/functions/v1/register-vehicle`, {
         method: 'POST',
         headers: {
@@ -557,41 +563,10 @@ const DriverRegistration = ({ onComplete, onBack }) => {
 
       if (response.status === 409) {
         setErrors({ reg: 'This vehicle is already registered today.' });
+        setShowConfirmation(false);
         setLoading(false);
         return;
       }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
-      }
-
-      setShowConfirmation(true);
-    } catch (error) {
-      setErrors({ submit: 'Oops! Something went wrong. Mind giving it another try?' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmSubmit = async () => {
-    setLoading(true);
-    
-    try {
-      // The registration was already checked in handleSubmit, so we can proceed
-      const response = await fetch(`${supabaseUrl}/functions/v1/register-vehicle`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reg: reg.toUpperCase().replace(/\s/g, ''),
-          phone: formatPhoneNumber(phone),
-          venue_id: selectedVenue,
-          vehicle_data: vehicleData
-        })
-      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -616,7 +591,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
           },
           body: JSON.stringify({
             phone: formatPhoneNumber(phone),
-            message: `You're all set! Your vehicle ${reg.toUpperCase().replace(/\s/g, '')}${venueText} is now registered with MoveMate. We'll let you know if you need to move it. Thank you for helping to keep our parking running smoothly!`,
+            message: `MoveMate: Your vehicle ${reg.toUpperCase().replace(/\s/g, '')}${venueText} is validated with MoveMate. You'll receive immediate notifications if your vehicle blocks access. Privacy: tiny.cc/movemate`,
             from: 'MOVEMATE'
           })
         });
@@ -1104,7 +1079,7 @@ const AdminDashboard = ({ onBack }) => {
         },
         body: JSON.stringify({
           phone: selectedVehicle.phone,
-          message: `Your vehicle ${selectedVehicle.reg}${venueText} may be blocking others. Please check and move it if necessary. – MoveMate Team`,
+          message: `URGENT: vehicle ${selectedVehicle.reg}${venueText} must move immediately - someone waiting to depart. Thank you for your cooperation.`,
           from: 'MOVEMATE'
         })
       });
@@ -1148,7 +1123,7 @@ const AdminDashboard = ({ onBack }) => {
       
       <div className="admin-container">
         <div className="admin-header">
-          <h1 className="heading" style={{ margin: 0 }}>Marshal Dashboard</h1>
+          <h1 className="heading" style={{ margin: 0 }}>Admin Dashboard</h1>
           
           <div className="admin-controls">
             <div className="venue-selector">
@@ -1393,15 +1368,84 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
   const [reg, setReg] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [vehicleData, setVehicleData] = useState(null);
+  const [vehicleLoading, setVehicleLoading] = useState(false);
+  const [vehicleError, setVehicleError] = useState('');
+  const debounceRef = useRef();
+
+  // DVLA lookup logic (copied from DriverRegistration)
+  const DVLA_PROXY_URL = process.env.REACT_APP_DVLA_PROXY_URL || '/api/vehicle-enquiry';
+  const MOCK_REGISTRATIONS = {
+    'AB12CDE': { colour: 'BLACK', make: 'BMW', model: '3 Series', registrationNumber: 'AB12CDE' },
+    'CD34EFG': { colour: 'WHITE', make: 'FORD', model: 'Fiesta', registrationNumber: 'CD34EFG' },
+    'EF56HIJ': { colour: 'BLUE', make: 'TOYOTA', model: 'Corolla', registrationNumber: 'EF56HIJ' },
+    'GH78KLM': { colour: 'RED', make: 'AUDI', model: 'A3', registrationNumber: 'GH78KLM' },
+    'IJ90NOP': { colour: 'GREY', make: 'MERCEDES', model: 'C Class', registrationNumber: 'IJ90NOP' },
+    'KL12QRS': { colour: 'SILVER', make: 'HONDA', model: 'Civic', registrationNumber: 'KL12QRS' },
+    'MN34TUV': { colour: 'GREEN', make: 'NISSAN', model: 'Qashqai', registrationNumber: 'MN34TUV' },
+    'OP56WXY': { colour: 'YELLOW', make: 'RENAULT', model: 'Clio', registrationNumber: 'OP56WXY' },
+    'QR78ZAB': { colour: 'ORANGE', make: 'VOLKSWAGEN', model: 'Golf', registrationNumber: 'QR78ZAB' },
+    'ST90CDE': { colour: 'BROWN', make: 'KIA', model: 'Sportage', registrationNumber: 'ST90CDE' },
+  };
+
+  const fetchVehicleData = async (reg) => {
+    setVehicleError('');
+    setVehicleData(null);
+    if (!reg) return;
+    const regClean = reg.replace(/\s/g, '').toUpperCase();
+    if (MOCK_REGISTRATIONS[regClean]) {
+      setVehicleData(MOCK_REGISTRATIONS[regClean]);
+      return;
+    }
+    setVehicleLoading(true);
+    try {
+      const res = await fetch(DVLA_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationNumber: regClean }),
+      });
+      if (!res.ok) {
+        let errorMsg = 'Vehicle not found or DVLA error';
+        try {
+          const errorData = await res.json();
+          if (errorData.errors && errorData.errors[0] && errorData.errors[0].detail) {
+            errorMsg = errorData.errors[0].detail;
+          } else if (errorData.message) {
+            errorMsg = errorData.message;
+          }
+        } catch (e) {}
+        setVehicleError(errorMsg);
+        setVehicleData(null);
+        return;
+      }
+      const data = await res.json();
+      setVehicleData(data);
+      setVehicleError('');
+    } catch (err) {
+      setVehicleError('Network error or proxy not running');
+      setVehicleData(null);
+    } finally {
+      setVehicleLoading(false);
+    }
+  };
+
+  const handleRegChange = (value) => {
+    setReg(value.toUpperCase());
+    setError('');
+    setVehicleData(null);
+    setVehicleError('');
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchVehicleData(value);
+    }, 600);
+  };
 
   const handleSubmit = async () => {
     if (!validateUKReg(reg)) {
       setError('Please enter a valid UK registration number.');
       return;
     }
-    
     setLoading(true);
-    
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
         method: 'POST',
@@ -1413,9 +1457,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
           blockedReg: reg.toUpperCase().replace(/\s/g, '')
         })
       });
-      
       if (!response.ok) throw new Error('Failed to send notification');
-      
       onComplete();
     } catch (error) {
       console.error('Error:', error);
@@ -1435,21 +1477,61 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
         <p className="subheading">
           Don't worry – we've got you covered! Just tell us which car is blocking you and we'll handle the rest sorted.
         </p>
-        
-        <div>
+        <div style={{ position: 'relative' }}>
           <InputField
             label="What is the registration of the car that is blocking you?"
             icon={CarIcon}
             value={reg}
-            onChange={(e) => {
-              setReg(e.target.value.toUpperCase());
-              setError('');
-            }}
+            onChange={(e) => handleRegChange(e.target.value)}
             placeholder="AB12 CDE"
             error={error}
           />
+          {/* Inline loading indicator */}
+          {reg.replace(/\s/g, '').length >= 4 && (
+            <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
+              {vehicleLoading && (
+                <span className="vehicle-info vehicle-info-loading" style={{ color: '#64748b', fontSize: '0.95rem' }}>
+                  <span className="spinner" style={{
+                    display: 'inline-block',
+                    width: 16,
+                    height: 16,
+                    border: '2px solid #cbd5e1',
+                    borderTop: '2px solid #64748b',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginRight: 6,
+                    verticalAlign: 'middle'
+                  }} />
+                  Looking up...
+                </span>
+              )}
+            </div>
+          )}
+          {/* Vehicle info or error below input */}
+          {vehicleData && !vehicleLoading && reg.replace(/\s/g, '').length >= 4 && (
+            <span className="vehicle-info" style={{ display: 'block', marginTop: 4, color: '#64748b', fontSize: '0.95rem' }}>
+              {`
+                ${vehicleData.colour || ''}
+                ${vehicleData.engineCapacity ? (vehicleData.engineCapacity / 1000).toFixed(1) + 'L' : ''}
+                ${vehicleData.make || ''}
+                ${vehicleData.model || ''}
+              `.replace(/ +/g, ' ').trim()}
+            </span>
+          )}
+          {vehicleError && !vehicleLoading && reg.replace(/\s/g, '').length >= 4 && (
+            <span className="vehicle-info vehicle-info-error" style={{ display: 'block', marginTop: 4, color: '#d32f2f', fontSize: '0.95rem' }}>
+              {vehicleError}
+            </span>
+          )}
         </div>
-        
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg);}
+              100% { transform: rotate(360deg);}
+            }
+          `}
+        </style>
         <button
           className="button-primary"
           onClick={handleSubmit}
