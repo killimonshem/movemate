@@ -31,7 +31,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: req.headers.get('Authorization') || '' },
         },
       }
     )
@@ -62,7 +62,7 @@ serve(async (req) => {
     }
 
     // Insert the registration
-    const registrationData = {
+    const registrationData: any = {
       reg: reg.toUpperCase().replace(/\s/g, ''),
       phone: phone,
       venue_id: venue_id,

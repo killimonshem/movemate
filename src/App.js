@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
+// Supabase configuration - using Edge Functions instead of direct client
 import './App.css';
 import './AppStyles.css';
 
@@ -13,8 +13,6 @@ const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1
 
 //   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 // );
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables!');
