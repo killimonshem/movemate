@@ -48,15 +48,24 @@ serve(async (req) => {
     // Hash the password
     const passwordHash = await hashPassword(password.trim())
 
-    // Query the super_admins table
+    // Query the super_admins table - use .maybeSingle() instead of .single()
     const { data, error } = await supabaseClient
       .from('super_admins')
       .select('id, username, email, created_at')
       .eq('username', username.trim())
       .eq('password_hash', passwordHash)
-      .single()
+      .maybeSingle()
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error:', error)
+      return new Response(
+        JSON.stringify({ error: 'Database error occurred' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        },
+      )
+    }
 
     if (data) {
       return new Response(
@@ -76,11 +85,12 @@ serve(async (req) => {
       )
     }
   } catch (error) {
+    console.error('Unexpected error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'An unexpected error occurred' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       },
     )
   }
