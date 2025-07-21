@@ -193,23 +193,23 @@ const InputField = ({
 
 // Home Screen Component
 const HomeScreen = ({ onNavigate }) => (
-  <div className="container">
-    <div className="content-wrapper">
+    <div className="container">
+      <div className="content-wrapper">
       <h1 className="home-title">MoveMate</h1>
-      <p className="home-subtitle">
+        <p className="home-subtitle">
         The smart way to manage vehicle movements at your venue
-      </p>
-      
-      <button 
-        className="button-primary"
+        </p>
+        
+          <button
+            className="button-primary"
         onClick={() => onNavigate('driver-registration')}
-      >
-        <span>Register My Vehicle</span>
-        <ArrowRightIcon />
-      </button>
-      
-      <button 
-        className="button-secondary"
+          >
+            <span>Register My Vehicle</span>
+            <ArrowRightIcon />
+          </button>
+          
+          <button
+            className="button-secondary"
         onClick={() => onNavigate('blocked-driver')}
       >
         <span>I'm Blocked In</span>
@@ -221,11 +221,11 @@ const HomeScreen = ({ onNavigate }) => (
         onClick={() => onNavigate('admin-login')}
       >
         <span>Admin Access</span>
-        <ArrowRightIcon />
-      </button>
+            <ArrowRightIcon />
+          </button>
+      </div>
     </div>
-  </div>
-);
+  );
 
 // Welcome Screen Component
 const WelcomeScreen = ({ onStart, onBack, title, description, buttonText = "Get Started" }) => (
@@ -253,7 +253,7 @@ const DetailsConfirmationScreen = ({ details, onConfirm, onEdit, onBack }) => (
   <div className="container">
     <div className="header">
       <BackButton onClick={onBack} />
-    </div>
+        </div>
     <div className="content-wrapper">
       <h1 className="heading">Confirm Your Details</h1>
       <p className="subheading">Please review your information before submitting</p>
@@ -270,24 +270,24 @@ const DetailsConfirmationScreen = ({ details, onConfirm, onEdit, onBack }) => (
         <div className="detail-row">
           <span className="detail-label">Venue:</span>
           <span className="detail-value">{details.venue}</span>
+          </div>
         </div>
-      </div>
       
-      <button 
+          <button 
         className="button-primary"
         onClick={onConfirm}
-      >
+          >
         <span>Confirm & Submit</span>
         <CheckIcon />
-      </button>
+          </button>
       
-      <button 
+          <button 
         className="button-tertiary"
         onClick={onEdit}
-      >
+          >
         <span>Edit Details</span>
         <ArrowRightIcon />
-      </button>
+          </button>
     </div>
   </div>
 );
@@ -359,7 +359,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ registrationNumber: regClean }),
       });
-      
+
       if (res.ok) {
         return await res.json();
       }
@@ -388,7 +388,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     
     // Clear error for this field
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    setErrors(prev => ({ ...prev, [field]: '' }));
     }
     
     // Update venue name when venue_id changes
@@ -405,7 +405,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
       const error = validateField(field, formData[field]);
       if (error) newErrors[field] = error;
     });
-
+    
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -438,7 +438,7 @@ const DriverRegistration = ({ onComplete, onBack }) => {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Registration failed');
       }
-
+      
       onComplete();
     } catch (error) {
       console.error('Registration error:', error);
@@ -479,69 +479,69 @@ const DriverRegistration = ({ onComplete, onBack }) => {
           Help us keep your venue running smoothly by registering your vehicle details
         </p>
         
-        <InputField
+            <InputField
           label="Vehicle Registration"
-          icon={CarIcon}
+              icon={CarIcon}
           value={formData.reg}
           onChange={(e) => handleChange('reg', e.target.value.toUpperCase())}
-          placeholder="AB12 CDE"
-          error={errors.reg}
+              placeholder="AB12 CDE"
+              error={errors.reg}
           maxLength={8}
         />
         
-        <InputField
+          <InputField
           label="Mobile Number"
-          icon={PhoneIcon}
+            icon={PhoneIcon}
           type="tel"
           value={formData.phone}
-          onChange={(e) => handleChange('phone', e.target.value)}
-          placeholder="07123 456789"
-          error={errors.phone}
-          maxLength={15}
-        />
-        
-        <div className="input-container">
+            onChange={(e) => handleChange('phone', e.target.value)}
+            placeholder="07123 456789"
+            error={errors.phone}
+            maxLength={15}
+          />
+          
+          <div className="input-container">
           <label className="label">Venue</label>
-          <div className="input-wrapper">
-            <select
+            <div className="input-wrapper">
+              <select
               className="input"
               value={formData.venue_id}
               onChange={(e) => handleChange('venue_id', e.target.value)}
-              disabled={loadingVenues}
-            >
+                disabled={loadingVenues}
+              >
               <option value="">Select a venue...</option>
-              {venues.map((venue) => (
-                <option key={venue.id} value={venue.id}>
-                  {venue.name}
-                </option>
-              ))}
-            </select>
-          </div>
+                {venues.map((venue) => (
+                  <option key={venue.id} value={venue.id}>
+                    {venue.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           {errors.venue_id && (
             <div className="error-message">
-              <AlertIcon />
+                <AlertIcon />
               <span>{errors.venue_id}</span>
+              </div>
+            )}
+          </div>
+          
+          {errors.submit && (
+            <div className="error-container">
+            <div className="error-message">
+                <AlertIcon />
+                <span>{errors.submit}</span>
+              </div>
             </div>
           )}
-        </div>
         
-        {errors.submit && (
-          <div className="error-container">
-            <div className="error-message">
-              <AlertIcon />
-              <span>{errors.submit}</span>
-            </div>
-          </div>
-        )}
-        
-        <button 
+            <button 
           className="button-primary"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
+              onClick={handleSubmit}
+              disabled={loading}
+            >
           <span>{loading ? 'Processing...' : 'Continue'}</span>
-          {!loading && <ArrowRightIcon />}
-        </button>
+              {!loading && <ArrowRightIcon />}
+            </button>
       </div>
     </div>
   );
@@ -648,17 +648,17 @@ const AdminLogin = ({ onLogin, onBack }) => {
 
 // Success Screen Component
 const SuccessScreen = ({ onFinish, title, message }) => (
-  <div className="container">
+    <div className="container">
     <div className="content-wrapper">
       <div className="success-container">
         <div className="success-icon-container">
           <CheckIcon style={{ width: '40px', height: '40px', color: '#34C759' }} />
-        </div>
+      </div>
         <h1 className="heading">{title}</h1>
         <p className="subheading">{message}</p>
-      </div>
-      
-      <button
+            </div>
+
+            <button 
         className="button-primary"
         onClick={onFinish}
         onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
@@ -666,9 +666,9 @@ const SuccessScreen = ({ onFinish, title, message }) => (
       >
         <span>Perfect!</span>
         <CheckIcon />
-      </button>
-    </div>
-  </div>
+            </button>
+          </div>
+        </div>
 );
 
 // Blocked Driver Input Component
@@ -740,7 +740,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
 
   const handleRegChange = (value) => {
     setReg(value.toUpperCase());
-    setError('');
+                setError('');
     setVehicleData(null);
     setVehicleError('');
     
@@ -790,14 +790,14 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
           Don't worry – we've got you covered! Just tell us which car is blocking you and we'll handle the rest sorted.
         </p>
         <div style={{ position: 'relative' }}>
-          <InputField
+            <InputField
             label="What is the registration of the car that is blocking you?"
             icon={CarIcon}
             value={reg}
             onChange={(e) => handleRegChange(e.target.value)}
             placeholder="AB12 CDE"
-            error={error}
-          />
+              error={error}
+            />
           {/* Inline loading indicator */}
           {reg.replace(/\s/g, '').length >= 4 && (
             <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
@@ -815,7 +815,7 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
                     verticalAlign: 'middle'
                   }} />
                   Looking up...
-                </span>
+                        </span>
               )}
             </div>
           )}
@@ -828,14 +828,14 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
                 ${vehicleData.make || ''}
                 ${vehicleData.model || ''}
               `.replace(/ +/g, ' ').trim()}
-            </span>
+                          </span>
           )}
           {vehicleError && !vehicleLoading && reg.replace(/\s/g, '').length >= 4 && (
             <span className="vehicle-info vehicle-info-error" style={{ display: 'block', marginTop: 4, color: '#d32f2f', fontSize: '0.95rem' }}>
               {vehicleError}
             </span>
           )}
-        </div>
+            </div>
         <style>
           {`
             @keyframes spin {
@@ -844,24 +844,24 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
             }
           `}
         </style>
-        <button
+            <button 
           className="button-primary"
-          onClick={handleSubmit}
-          disabled={loading}
+              onClick={handleSubmit}
+              disabled={loading}
         >
           {loading ? (
             <>
               <div className="loading-spinner"></div>
               <span>Sending notification...</span>
-            </>
-          ) : (
-            <>
+                              </>
+                            ) : (
+                              <>
               <span>Send Move Request</span>
               <ArrowRightIcon />
-            </>
-          )}
-        </button>
-      </div>
+                              </>
+                            )}
+                          </button>
+            </div>
     </div>
   );
 };
