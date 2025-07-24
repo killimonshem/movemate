@@ -500,25 +500,55 @@ html, body {
 }
 
 .venue-dropdown {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 16px 16px 16px 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
   background: white;
-  color: #1e293b;
-  font-size: 0.9rem;
+  color: #1a1a1a;
+  font-size: 18px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 150px;
+  height: 52px;
+  box-sizing: border-box;
+  outline: none;
+  display: flex;
+  align-items: center;
 }
 
 .venue-dropdown:focus {
-  outline: none;
   border-color: #007AFF;
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .venue-dropdown:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.bulk-sms-button {
+  background-color: #7c3aed;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+}
+
+.bulk-sms-button:hover {
+  background-color: #5b21b6;
+}
+
+.bulk-sms-button:disabled {
   background: #f1f5f9;
   color: #94a3b8;
   cursor: not-allowed;
