@@ -1,18 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts"
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts"
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+// In-memory rate limiting (in production, use Redis or similar)
+const loginAttempts = new Map<string, { count: number; resetTime: number }>()
+const MAX_ATTEMPTS = 5
+const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes
+
+function checkRateLimit(identifier: string): { allowed: boolean; remainingTime?: number } {
+  const now = Date.now()
+  const attempt = loginAttempts.get(identifier)
+
+  if (!attempt) {
+    loginAttempts.set(identifier, { count: 1, resetTime: now + LOCKOUT_DURATION })
+    return { allowed: true }
+  }
+
+  // Reset if lockout period has passed
+  if (now > attempt.resetTime) {
+    loginAttempts.set(identifier, { count: 1, resetTime: now + LOCKOUT_DURATION })
+    return { allowed: true }
+  }
+
+  // Check if max attempts exceeded
+  if (attempt.count >= MAX_ATTEMPTS) {
+    const remainingTime = Math.ceil((attempt.resetTime - now) / 1000 / 60)
+    return { allowed: false, remainingTime }
+  }
+
+  // Increment attempt count
+  attempt.count++
+  return { allowed: true }
+}
+
+function clearRateLimit(identifier: string) {
+  loginAttempts.delete(identifier)
 }
 
 serve(async (req) => {
@@ -26,10 +53,28 @@ serve(async (req) => {
 
     if (!username || !password) {
       return new Response(
-        JSON.stringify({ error: 'Username and password are required' }),
-        { 
+        JSON.stringify({ error: 'All fields are required' }),
+        {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
+        },
+      )
+    }
+
+    // Rate limiting check
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const identifier = `${username.trim()}:${clientIp}`
+    const rateCheck = checkRateLimit(identifier)
+
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Too many login attempts. Please try again later.',
+          retryAfter: rateCheck.remainingTime
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 429,
         },
       )
     }
@@ -45,40 +90,59 @@ serve(async (req) => {
       }
     )
 
-    // Hash the password
-    const passwordHash = await hashPassword(password.trim())
-
-    // Query the super_admins table - use .maybeSingle() instead of .single()
+    // Query the super_admins table
     const { data, error } = await supabaseClient
       .from('super_admins')
-      .select('id, username, email, created_at')
+      .select('id, username, email, password_hash, created_at')
       .eq('username', username.trim())
-      .eq('password_hash', passwordHash)
       .maybeSingle()
 
     if (error) {
       console.error('Database error:', error)
       return new Response(
-        JSON.stringify({ error: 'Database error occurred' }),
-        { 
+        JSON.stringify({ error: 'Authentication failed' }),
+        {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500,
+          status: 401,
         },
       )
     }
 
-    if (data) {
+    // Verify password using bcrypt
+    if (data && await bcrypt.compare(password.trim(), data.password_hash)) {
+      // Clear rate limit on successful login
+      clearRateLimit(identifier)
+
+      // Generate a simple session token (in production, use proper JWT with expiry)
+      const sessionToken = crypto.randomUUID()
+
+      // Store session in database (you should create a sessions table)
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      await supabaseClient
+        .from('admin_sessions')
+        .insert([{
+          admin_id: data.id,
+          session_token: sessionToken,
+          expires_at: expiresAt.toISOString(),
+        }])
+
       return new Response(
-        JSON.stringify({ success: true, admin: data }),
-        { 
+        JSON.stringify({
+          success: true,
+          admin: { id: data.id, username: data.username, email: data.email },
+          sessionToken,
+          expiresAt: expiresAt.toISOString()
+        }),
+        {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         },
       )
     } else {
+      // Generic error message - don't reveal if user exists
       return new Response(
-        JSON.stringify({ error: 'Invalid credentials' }),
-        { 
+        JSON.stringify({ error: 'Authentication failed' }),
+        {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 401,
         },
@@ -87,11 +151,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error:', error)
     return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred' }),
-      { 
+      JSON.stringify({ error: 'Authentication failed' }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 401,
       },
     )
   }
-}) 
+})

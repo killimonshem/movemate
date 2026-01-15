@@ -3,10 +3,15 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import './AppStyles.css';
 import { AdminLogin, AdminDashboard } from './AdminDashboard';
+import { supabase, getSession, onAuthStateChange, signOut, getUser, upsertMemberProfile, signUpWithEmail, signInWithEmail } from './auth';
+import MemberProfile from './MemberProfile';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://frxtcfoopvmfhwjezyuf.supabase.co';
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeHRjZm9vcHZtZmh3amV6eXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwMTMyMDAsImV4cCI6MjA2NzU4OTIwMH0.5oGZ0rAHFYfzJSF7505r0Q1FFMr6ZOZUcWb1setq-38';
+
+// Initialize Supabase client for auth
+// const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Note: If you get "Settings table not found" errors, create the admin_settings table in your Supabase database:
 // CREATE TABLE admin_settings (
@@ -298,17 +303,30 @@ const HomeScreen = ({ onNavigate }) => {
 };
 
 // Welcome Screen Component
-const WelcomeScreen = ({ onStart, onBack, title, description, buttonText = "Get Started" }) => (
+const WelcomeScreen = ({ onFirstTime, onSignIn, title, description }) => (
   <div className="container">
     <div className="header">
-      <BackButton onClick={onBack} />
+      {/* Optionally add a logo or back button here */}
     </div>
     <div className="content-wrapper">
       <h1 className="heading">{title}</h1>
       <p className="subheading">{description}</p>
-      
-      <button className="button-primary" onClick={onStart}>
-        <span>{buttonText}</span>
+      <button
+        className="button-primary"
+        onClick={onFirstTime}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
+      >
+        <span>First Time Here</span>
+        <ArrowRightIcon />
+      </button>
+      <button
+        className="button-secondary"
+        onClick={onSignIn}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
+      >
+        <span>I Have an Account</span>
         <ArrowRightIcon />
       </button>
     </div>
@@ -1021,73 +1039,251 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
   );
 };
 
+// Member Login Component
+const MemberLogin = ({ onBack, onLogin }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setEmailSent(false);
+    try {
+      if (isSignup) {
+        const { error } = await signUpWithEmail(email, password);
+        if (error) setError(error.message);
+        else setEmailSent(true);
+      } else {
+        const { error } = await signInWithEmail(email, password);
+        if (error) setError(error.message);
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container content-wrapper">
+      <h1 className="heading">{isSignup ? 'Sign Up' : 'Sign In'}</h1>
+      <p className="subheading">{isSignup ? 'Create your account to access member features.' : 'Sign in to access your member features.'}</p>
+      <form onSubmit={handleEmailAuth}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+          className="input"
+          style={{ marginBottom: 8 }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+          className="input"
+          style={{ marginBottom: 8 }}
+        />
+        <button className="button-primary" type="submit" disabled={loading}>
+          {isSignup ? 'Sign Up' : 'Sign In'}
+        </button>
+      </form>
+      {emailSent && (
+        <div className="success-message">
+          Check your email to confirm your account before signing in.
+        </div>
+      )}
+      {error && <div className="error-message">{error}</div>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'center' }}>
+        <button className="button-tertiary" onClick={onBack}>Back</button>
+        <button className="button-tertiary" onClick={() => { setIsSignup(!isSignup); setError(''); setEmailSent(false); }}>
+          {isSignup ? 'Already have an account? Sign In' : 'No account? Sign Up'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Global Error Boundary for navigation and UI errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    // Log error to monitoring service if needed
+    console.error('ErrorBoundary caught:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div className="container content-wrapper"><h1>Something went wrong.</h1><pre>{this.state.error?.toString()}</pre></div>;
+    }
+    return this.props.children;
+  }
+}
+
 // Main App Component
 const App = () => {
   const [view, setView] = useState('home');
+  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [profileError, setProfileError] = useState('');
+  const [showProfile, setShowProfile] = useState(false);
+  const navStack = useRef(['home']);
+
+  // On mount, get session and listen for changes
+  useEffect(() => {
+    let unsub = null;
+    (async () => {
+      const sess = await getSession();
+      setSession(sess);
+      setLoadingSession(false);
+      if (sess && sess.user) {
+        setUser(sess.user);
+        // Upsert member profile
+        const { error } = await upsertMemberProfile(sess.user);
+        if (error) setProfileError('Could not create your member profile. Please contact support.');
+        else setProfileError('');
+      } else {
+        setUser(null);
+        setProfileError('');
+        setShowProfile(false);
+        setView('home'); // Only redirect to home on sign out
+      }
+      unsub = onAuthStateChange(async (newSession) => {
+        setSession(newSession);
+        if (newSession && newSession.user) {
+          setUser(newSession.user);
+          // Upsert member profile
+          const { error } = await upsertMemberProfile(newSession.user);
+          if (error) setProfileError('Could not create your member profile. Please contact support.');
+          else setProfileError('');
+          // Do NOT redirect to home here; let user continue their journey
+        } else {
+          setUser(null);
+          setProfileError('');
+          setShowProfile(false);
+          setView('home'); // Only redirect to home on sign out
+        }
+      });
+    })();
+    return () => {
+      if (unsub && typeof unsub.unsubscribe === 'function') unsub.unsubscribe();
+    };
+  }, []);
+
+  // Navigation helpers
+  const navigate = (nextView) => {
+    setView(nextView);
+    navStack.current.push(nextView);
+  };
+  const goBack = () => {
+    if (navStack.current.length > 1) {
+      navStack.current.pop();
+      setView(navStack.current[navStack.current.length - 1]);
+    } else {
+      setView('home');
+    }
+  };
+  // Reset nav stack on sign out
+  useEffect(() => {
+    if (!user) navStack.current = ['home'];
+  }, [user]);
 
   const renderView = () => {
+    if (loadingSession) {
+      return <div className="container content-wrapper"><div>Loading...</div></div>;
+    }
+    // If logged in, show dashboard or profile
+    if (user) {
+      if (showProfile) {
+        return (
+          <MemberProfile
+            member={user}
+            onSignOut={async () => { await signOut(); setShowProfile(false); setView('home'); }}
+            onBack={goBack}
+          >
+          </MemberProfile>
+        );
+      }
+      return (
+        <div className="container content-wrapper">
+          <h1 className="heading">Welcome, {user.email || user.user_metadata?.full_name || 'Member'}!</h1>
+          <p className="subheading">You are signed in with Google.</p>
+          {profileError && <div className="error-message" style={{ marginTop: 16 }}>{profileError}</div>}
+         <button className="button-primary" onClick={() => setShowProfile(true)} style={{ marginRight: 12 }}>Profile</button>
+          <button className="button-secondary" onClick={async () => { await signOut(); setView('home'); }}>Sign Out</button>
+        </div>
+      );
+    }
     switch (view) {
       case 'home':
-        return <HomeScreen onNavigate={setView} />;
-      
+        return <HomeScreen onNavigate={navigate} />;
       case 'driver-welcome':
         return (
           <WelcomeScreen
             title="Hello!"
             description="Thank you for joining us today! Let’s get your car registered so we can give you a polite nudge if someone needs to leave."
-            onStart={() => setView('driver-register')}
-            onBack={() => setView('home')}
-            buttonText="Let’s do this!"
+            onFirstTime={() => navigate('driver-register')}
+            onSignIn={() => navigate('member-login')}
+            onBack={goBack}
           />
         );
-      
       case 'driver-register':
-        return <DriverRegistration onComplete={() => setView('driver-confirm')} onBack={() => setView('driver-welcome')} />;
-      
+        return <DriverRegistration onComplete={() => navigate('driver-confirm')} onBack={goBack} />;
       case 'driver-confirm':
         return (
           <SuccessScreen
             title="You’re all set!"
             message="Your vehicle is now registered and you should have received a confirmation text. If someone needs to leave, we’ll give you a polite heads up. Thank you for helping keep our parking running smoothly!"
-            onFinish={() => setView('home')}
+            onFinish={() => navigate('home')}
           />
         );
-      
       case 'blocked-welcome':
         return (
           <WelcomeScreen
             title="Stuck behind someone?"
             description="We’ve all been there! No worries – just let us know which car is blocking you and we’ll get them moving."
-            onStart={() => setView('blocked-input')}
-            onBack={() => setView('home')}
-            buttonText="Get me out!"
+            onFirstTime={() => navigate('blocked-input')}
+            onSignIn={() => navigate('member-login')}
+            onBack={goBack}
           />
         );
-      
       case 'blocked-input':
-        return <BlockedDriverInput onComplete={() => setView('blocked-confirm')} onBack={() => setView('blocked-welcome')} />;
-      
+        return <BlockedDriverInput onComplete={() => navigate('blocked-confirm')} onBack={goBack} />;
       case 'blocked-confirm':
         return (
           <SuccessScreen
             title="Help is on the way!"
             message="We’ve sent a polite message to the driver. They should be moving their car shortly. Thank you for your patience!"
-            onFinish={() => setView('home')}
+            onFinish={() => navigate('home')}
           />
         );
-      
       case 'admin-login':
-        return <AdminLogin onLogin={() => setView('admin')} onBack={() => setView('home')} />;
-      
+        return <AdminLogin onLogin={() => navigate('admin')} onBack={goBack} />;
       case 'admin':
-        return <AdminDashboard onBack={() => setView('home')} />;
-      
+        return <AdminDashboard onBack={goBack} />;
+      // Placeholder for member login flow
+      case 'member-login':
+        return <MemberLogin onBack={goBack} onLogin={() => navigate('home')} />;
       default:
-        return <HomeScreen onNavigate={setView} />;
+        return <HomeScreen onNavigate={navigate} />;
     }
   };
 
-  return <>{renderView()}</>;
+  return <ErrorBoundary>{renderView()}</ErrorBoundary>;
 };
 
 export {
