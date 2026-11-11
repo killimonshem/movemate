@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 // Supabase configuration - using Edge Functions instead of direct client
 import './App.css';
 import './AppStyles.css';
+import DriverWelcome from './DriverWelcome';
 import { AdminLogin, AdminDashboard } from './AdminDashboard';
 
 // Initialize Supabase client
@@ -18,6 +19,21 @@ const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables!');
   console.error('Please check your .env file in the movemate/ directory');
+}
+
+async function loadVenues(signal) {
+  const response = await fetch(`${supabaseUrl}/functions/v1/fetch-venues`, {
+    headers: {
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+    },
+    signal,
+  });
+
+  if (!response.ok) throw new Error('Failed to fetch venues');
+
+  const { data } = await response.json();
+  return data || [];
 }
 
 // Validation functions
@@ -246,76 +262,6 @@ const InputField = ({
   );
 };
 
-// Home Screen Component
-const HomeScreen = ({ onNavigate }) => {
-
-  return (
-    <div className="container">
-      {/* Admin Dashboard CTA - positioned in top-right corner */}
-      <div className="home-admin-cta">
-        <button 
-          onClick={() => onNavigate('admin-login')} 
-          className="home-admin-button"
-          title="Admin Dashboard"
-        >
-          <LockIcon />
-          <span>Admin</span>
-        </button>
-      </div>
-      
-      <div className="content-wrapper">
-        <h1 className="home-title">
-          MoveMate
-        </h1>
-        <p className="home-subtitle">
-        Help us keep parking smooth for everyone - validate your spot today
-        </p>
-        
-        <div>
-          <button
-            className="button-primary"
-            onClick={() => onNavigate('driver-welcome')}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
-          >
-            <span>Register My Vehicle</span>
-            <ArrowRightIcon />
-          </button>
-          
-          <button
-            className="button-secondary"
-            onClick={() => onNavigate('blocked-welcome')}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
-          >
-            <span>I've Been Blocked In</span>
-            <ArrowRightIcon />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Welcome Screen Component
-const WelcomeScreen = ({ onStart, onBack, title, description, buttonText = "Get Started" }) => (
-  <div className="container">
-    <div className="header">
-      <BackButton onClick={onBack} />
-    </div>
-    <div className="content-wrapper">
-      <h1 className="heading">{title}</h1>
-      <p className="subheading">{description}</p>
-      
-      <button className="button-primary" onClick={onStart}>
-        <span>{buttonText}</span>
-        <ArrowRightIcon />
-      </button>
-    </div>
-  </div>
-);
-
-// Details Confirmation Screen Component
 const DetailsConfirmationScreen = ({ details, onConfirm, onEdit, onBack }) => (
   <div className="container">
     <div className="content-wrapper">
@@ -382,7 +328,7 @@ const DetailsConfirmationScreen = ({ details, onConfirm, onEdit, onBack }) => (
 );
 
 // Driver Registration Component
-const DriverRegistration = ({ onComplete, onBack }) => {
+const DriverRegistration = ({ onComplete, onBack, venueId }) => {
   const [reg, setReg] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedVenue, setSelectedVenue] = useState('');
@@ -410,28 +356,6 @@ const DriverRegistration = ({ onComplete, onBack }) => {
     'OP56WXY': { colour: 'YELLOW', make: 'RENAULT', model: 'Clio', registrationNumber: 'OP56WXY' },
     'QR78ZAB': { colour: 'ORANGE', make: 'VOLKSWAGEN', model: 'Golf', registrationNumber: 'QR78ZAB' },
     'ST90CDE': { colour: 'BROWN', make: 'KIA', model: 'Sportage', registrationNumber: 'ST90CDE' },
-  };
-
-  const fetchVenues = async () => {
-    setLoadingVenues(true);
-    try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/fetch-venues`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch venues');
-      
-      const { data } = await response.json();
-      setVenues(data || []);
-    } catch (error) {
-      console.error('Error fetching venues:', error);
-    } finally {
-      setLoadingVenues(false);
-    }
   };
 
   const fetchVehicleData = async (reg) => {
@@ -615,8 +539,23 @@ const DriverRegistration = ({ onComplete, onBack }) => {
   };
 
   useEffect(() => {
-    fetchVenues();
-  }, []);
+    const request = new AbortController();
+    setLoadingVenues(true);
+    loadVenues(request.signal)
+      .then((availableVenues) => {
+        if (request.signal.aborted) return;
+        setVenues(availableVenues);
+        const linkedVenue = availableVenues.find((venue) => String(venue.id) === venueId);
+        setSelectedVenue((current) => current || linkedVenue?.id || '');
+      })
+      .catch((error) => {
+        if (!request.signal.aborted) console.error('Error fetching venues:', error);
+      })
+      .finally(() => {
+        if (!request.signal.aborted) setLoadingVenues(false);
+      });
+    return () => request.abort();
+  }, [venueId]);
 
   // If showing confirmation screen, render that instead
   if (showConfirmation) {
@@ -1024,25 +963,30 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
 // Main App Component
 const App = () => {
   const [view, setView] = useState('home');
+  const [venueId] = useState(() => new URLSearchParams(window.location.search).get('venue_id'));
+  const [venueName, setVenueName] = useState('');
+
+  useEffect(() => {
+    if (!venueId) return;
+    const request = new AbortController();
+    loadVenues(request.signal)
+      .then((venues) => {
+        const venue = venues.find((item) => String(item.id) === venueId);
+        if (!request.signal.aborted && venue) setVenueName(venue.name);
+      })
+      .catch((error) => {
+        if (!request.signal.aborted) console.error('Error fetching venue context:', error);
+      });
+    return () => request.abort();
+  }, [venueId]);
 
   const renderView = () => {
     switch (view) {
       case 'home':
-        return <HomeScreen onNavigate={setView} />;
-      
-      case 'driver-welcome':
-        return (
-          <WelcomeScreen
-            title="Hello!"
-            description="Thank you for joining us today! Let’s get your car registered so we can give you a polite nudge if someone needs to leave."
-            onStart={() => setView('driver-register')}
-            onBack={() => setView('home')}
-            buttonText="Let’s do this!"
-          />
-        );
+        return <DriverWelcome onNavigate={setView} venueName={venueName} />;
       
       case 'driver-register':
-        return <DriverRegistration onComplete={() => setView('driver-confirm')} onBack={() => setView('driver-welcome')} />;
+        return <DriverRegistration venueId={venueId} onComplete={() => setView('driver-confirm')} onBack={() => setView('home')} />;
       
       case 'driver-confirm':
         return (
@@ -1053,19 +997,8 @@ const App = () => {
           />
         );
       
-      case 'blocked-welcome':
-        return (
-          <WelcomeScreen
-            title="Stuck behind someone?"
-            description="We’ve all been there! No worries – just let us know which car is blocking you and we’ll get them moving."
-            onStart={() => setView('blocked-input')}
-            onBack={() => setView('home')}
-            buttonText="Get me out!"
-          />
-        );
-      
       case 'blocked-input':
-        return <BlockedDriverInput onComplete={() => setView('blocked-confirm')} onBack={() => setView('blocked-welcome')} />;
+        return <BlockedDriverInput onComplete={() => setView('blocked-confirm')} onBack={() => setView('home')} />;
       
       case 'blocked-confirm':
         return (
@@ -1083,7 +1016,7 @@ const App = () => {
         return <AdminDashboard onBack={() => setView('home')} />;
       
       default:
-        return <HomeScreen onNavigate={setView} />;
+        return <DriverWelcome onNavigate={setView} venueName={venueName} />;
     }
   };
 
