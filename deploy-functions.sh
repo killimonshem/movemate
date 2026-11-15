@@ -22,8 +22,19 @@ npx supabase functions deploy register-vehicle
 echo "Deploying fetch-registrations function..."
 npx supabase functions deploy fetch-registrations
 
+echo "Deploying send-sms function..."
+npx supabase functions deploy send-sms
+
+echo "Deploying send-notification function..."
+npx supabase functions deploy send-notification
+
 echo "All functions deployed successfully!"
 echo ""
-echo "Make sure to set the following environment variables in your Supabase dashboard:"
+echo "Make sure to set the following secrets in your Supabase project:"
 echo "- SUPABASE_SERVICE_ROLE_KEY"
-echo "- DVLA_API_KEY (for the vehicle enquiry API)" 
+echo "- ADMIN_SESSION_SECRET (recommended for signing admin session tokens)"
+echo "- TWILIO_ACCOUNT_SID"
+echo "- TWILIO_AUTH_TOKEN"
+echo "- TWILIO_FROM_NUMBER (or TWILIO_MESSAGING_SERVICE_SID)"
+echo ""
+echo "And set DVLA_API_KEY in Vercel / local .env for /api/vehicle-enquiry."
