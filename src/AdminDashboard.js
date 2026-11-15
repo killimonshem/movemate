@@ -102,18 +102,19 @@ const AdminLogin = ({ onLogin, onBack }) => {
 };
 
 // Admin Dashboard Component
-const AdminDashboard = ({ onBack }) => {
-  const [registrations, setRegistrations] = useState([]);
-  const [filteredRegistrations, setFilteredRegistrations] = useState([]);
-  const [loading, setLoading] = useState(true);
+const AdminDashboard = ({ onBack, previewData = null }) => {
+  const isReadOnlyPreview = Boolean(previewData);
+  const [registrations, setRegistrations] = useState(() => previewData?.registrations || []);
+  const [filteredRegistrations, setFilteredRegistrations] = useState(() => previewData?.registrations || []);
+  const [loading, setLoading] = useState(() => !previewData);
   const [sendingTo, setSendingTo] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [toast, setToast] = useState(null);
-  const [venues, setVenues] = useState([]);
+  const [venues, setVenues] = useState(() => previewData?.venues || []);
   const [selectedVenue, setSelectedVenue] = useState('');
-  const [loadingVenues, setLoadingVenues] = useState(true);
+  const [loadingVenues, setLoadingVenues] = useState(() => !previewData);
   const [dataError, setDataError] = useState(null);
   const [sortField, setSortField] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -129,7 +130,13 @@ const AdminDashboard = ({ onBack }) => {
   const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://frxtcfoopvmfhwjezyuf.supabase.co';
   const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeHRjZm9vcHZtZmh3amV6eXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwMTMyMDAsImV4cCI6MjA2NzU4OTIwMH0.5oGZ0rAHFYfzJSF7505r0Q1FFMr6ZOZUcWb1setq-38';
 
-  const fetchVenues = async () => {
+  const fetchVenues = useCallback(async () => {
+    if (isReadOnlyPreview) {
+      setVenues(previewData.venues);
+      setDataError(null);
+      setLoadingVenues(false);
+      return;
+    }
     setLoadingVenues(true);
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/fetch-venues`, {
@@ -150,9 +157,19 @@ const AdminDashboard = ({ onBack }) => {
     } finally {
       setLoadingVenues(false);
     }
-  };
+  }, [isReadOnlyPreview, previewData, supabaseKey, supabaseUrl]);
 
   const fetchRegistrations = useCallback(async () => {
+    if (isReadOnlyPreview) {
+      const previewRegistrations = selectedVenue
+        ? previewData.registrations.filter((registration) => registration.venue_id === selectedVenue)
+        : previewData.registrations;
+      setRegistrations(previewRegistrations);
+      setFilteredRegistrations(previewRegistrations);
+      setDataError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const url = new URL(`${supabaseUrl}/functions/v1/fetch-registrations`);
@@ -178,7 +195,7 @@ const AdminDashboard = ({ onBack }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedVenue]);
+  }, [isReadOnlyPreview, previewData, selectedVenue, supabaseKey, supabaseUrl]);
 
   const handleSearch = (term) => {
     setSearchTerm(term);
@@ -246,6 +263,11 @@ const AdminDashboard = ({ onBack }) => {
 
   const sendNotification = async () => {
     if (!selectedVehicle) return;
+    if (isReadOnlyPreview) {
+      setShowModal(false);
+      setToast({ message: 'Notifications are disabled in the local preview.', type: 'error' });
+      return;
+    }
     setShowModal(false);
     setSendingTo(selectedVehicle.phone);
     try {
@@ -308,6 +330,10 @@ const AdminDashboard = ({ onBack }) => {
   };
 
   const sendBulkSMS = async () => {
+    if (isReadOnlyPreview) {
+      setToast({ message: 'Bulk SMS is disabled in the local preview.', type: 'error' });
+      return;
+    }
     if (!bulkMessage.trim() || selectedRecipients.size === 0) {
       setToast({ message: 'Please enter a message and select recipients', type: 'error' });
       return;
@@ -365,18 +391,23 @@ const AdminDashboard = ({ onBack }) => {
 
   useEffect(() => {
     fetchVenues();
-  }, []);
+  }, [fetchVenues]);
 
   useEffect(() => {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
   return (
-    <div className="container">
+    <div className="container admin-dashboard-page">
       <div className="header">
         <BackButton onClick={onBack} text="Back to Home" />
       </div>
       <div className="admin-container">
+        {isReadOnlyPreview && (
+          <div className="admin-preview-notice" role="status">
+            Local preview data. SMS, refresh, and settings actions are disabled.
+          </div>
+        )}
         <div className="admin-header">
           <h1 className="heading" style={{ margin: 0 }}>Admin Dashboard</h1>
           <div className="admin-controls">
@@ -405,7 +436,7 @@ const AdminDashboard = ({ onBack }) => {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <button onClick={fetchRegistrations} className="refresh-button">
+            <button onClick={fetchRegistrations} className="refresh-button" disabled={isReadOnlyPreview} title={isReadOnlyPreview ? 'Disabled in local preview' : 'Refresh registrations'}>
               <RefreshIcon />
               <span>Refresh</span>
             </button>
@@ -413,7 +444,7 @@ const AdminDashboard = ({ onBack }) => {
             <button 
               onClick={() => setShowBulkSMSModal(true)} 
               className="bulk-sms-button"
-              disabled={filteredRegistrations.length === 0}
+              disabled={isReadOnlyPreview || filteredRegistrations.length === 0}
               style={{ marginLeft: 8 }}
             >
               <SendIcon />
@@ -426,7 +457,8 @@ const AdminDashboard = ({ onBack }) => {
           <button 
             onClick={() => window.location.reload()} 
             className="admin-settings-button"
-            title="Refresh Page"
+            title={isReadOnlyPreview ? 'Disabled in local preview' : 'Refresh Page'}
+            disabled={isReadOnlyPreview}
           >
             <SettingsIcon />
           </button>
@@ -551,8 +583,8 @@ const AdminDashboard = ({ onBack }) => {
                           <button
                             className="sms-button sms-button-secondary"
                             onClick={() => confirmSendNotification(reg)}
-                            disabled={sendingTo === reg.phone}
-                            title="Send SMS notification"
+                            disabled={isReadOnlyPreview || sendingTo === reg.phone}
+                            title={isReadOnlyPreview ? 'Disabled in local preview' : 'Send SMS notification'}
                           >
                             {sendingTo === reg.phone ? (
                               <>

@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // Supabase configuration - using Edge Functions instead of direct client
 import './App.css';
 import './AppStyles.css';
+<<<<<<< Updated upstream
 import DriverWelcome from './DriverWelcome';
 import { AdminLogin, AdminDashboard } from './AdminDashboard';
+=======
+import { supabase, getSession, onAuthStateChange, signOut, upsertMemberProfile, signUpWithEmail, signInWithEmail } from './auth';
+import MemberProfile from './MemberProfile';
+>>>>>>> Stashed changes
 
 // Initialize Supabase client
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://frxtcfoopvmfhwjezyuf.supabase.co';
@@ -68,14 +73,6 @@ const formatPhoneNumber = (phone) => {
     cleaned = '+44' + cleaned;
   }
   return cleaned;
-};
-
-// Mask phone number for privacy - show only last 3 digits
-const maskPhoneNumber = (phone) => {
-  if (!phone) return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length < 3) return phone;
-  return '***' + digits.substring(digits.length - 3);
 };
 
 // Icon Components
@@ -262,6 +259,80 @@ const InputField = ({
   );
 };
 
+<<<<<<< Updated upstream
+=======
+// Home Screen Component
+const HomeScreen = ({ onNavigate }) => {
+
+  return (
+    <div className="container">
+      <div className="content-wrapper">
+        <h1 className="home-title">
+          MoveMate
+        </h1>
+        <p className="home-subtitle">
+        Help us keep parking smooth for everyone - validate your spot today
+        </p>
+        
+        <div>
+          <button
+            className="button-primary"
+            onClick={() => onNavigate('driver-welcome')}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
+          >
+            <span>Register My Vehicle</span>
+            <ArrowRightIcon />
+          </button>
+          
+          <button
+            className="button-secondary"
+            onClick={() => onNavigate('blocked-welcome')}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
+          >
+            <span>I've Been Blocked In</span>
+            <ArrowRightIcon />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Welcome Screen Component
+const WelcomeScreen = ({ onFirstTime, onSignIn, title, description }) => (
+  <div className="container">
+    <div className="header">
+      {/* Optionally add a logo or back button here */}
+    </div>
+    <div className="content-wrapper">
+      <h1 className="heading">{title}</h1>
+      <p className="subheading">{description}</p>
+      <button
+        className="button-primary"
+        onClick={onFirstTime}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#0056CC'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = '#007AFF'}
+      >
+        <span>First Time Here</span>
+        <ArrowRightIcon />
+      </button>
+      <button
+        className="button-secondary"
+        onClick={onSignIn}
+        onMouseEnter={(e) => e.target.style.backgroundColor = '#E5E5E5'}
+        onMouseLeave={(e) => e.target.style.backgroundColor = '#F5F5F5'}
+      >
+        <span>I Have an Account</span>
+        <ArrowRightIcon />
+      </button>
+    </div>
+  </div>
+);
+
+// Details Confirmation Screen Component
+>>>>>>> Stashed changes
 const DetailsConfirmationScreen = ({ details, onConfirm, onEdit, onBack }) => (
   <div className="container">
     <div className="content-wrapper">
@@ -358,6 +429,27 @@ const DriverRegistration = ({ onComplete, onBack, venueId }) => {
     'ST90CDE': { colour: 'BROWN', make: 'KIA', model: 'Sportage', registrationNumber: 'ST90CDE' },
   };
 
+<<<<<<< Updated upstream
+=======
+  const fetchVenues = async () => {
+    setLoadingVenues(true);
+    try {
+      const { data, error } = await supabase
+        .from('venues')
+        .select('id, name, is_active')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setVenues(data || []);
+    } catch (error) {
+      console.error('Error fetching venues:', error);
+    } finally {
+      setLoadingVenues(false);
+    }
+  };
+
+>>>>>>> Stashed changes
   const fetchVehicleData = async (reg) => {
     setVehicleError('');
     setVehicleData(null);
@@ -471,33 +563,57 @@ const DriverRegistration = ({ onComplete, onBack, venueId }) => {
     setLoading(true);
     setErrors({});
     try {
-      // Check for existing registration for this reg today
-      const response = await fetch(`${supabaseUrl}/functions/v1/register-vehicle`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reg: reg.toUpperCase().replace(/\s/g, ''),
-          phone: formatPhoneNumber(phone),
-          venue_id: selectedVenue,
-          vehicle_data: vehicleData
-        })
-      });
+      const normalizedReg = reg.toUpperCase().replace(/\s/g, '');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
 
-      if (response.status === 409) {
+      const { data: existing, error: existingError } = await supabase
+        .from('registrations')
+        .select('id')
+        .eq('reg', normalizedReg)
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString())
+        .limit(1);
+
+      if (existingError) {
+        throw existingError;
+      }
+
+      if (existing && existing.length > 0) {
         setErrors({ reg: 'This vehicle is already registered today.' });
         setShowConfirmation(false);
         setLoading(false);
         return;
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
+      const safeVehicleData = {};
+      if (vehicleData && typeof vehicleData === 'object') {
+        const allowedFields = ['make', 'model', 'colour', 'year', 'fuelType', 'co2Emissions', 'engineCapacity'];
+        allowedFields.forEach((field) => {
+          if (vehicleData[field] !== undefined && vehicleData[field] !== null) {
+            safeVehicleData[field] = typeof vehicleData[field] === 'string'
+              ? vehicleData[field].trim().slice(0, 100)
+              : vehicleData[field];
+          }
+        });
       }
-      
+
+      const { error: insertError } = await supabase
+        .from('registrations')
+        .insert([{
+          reg: normalizedReg,
+          phone: formatPhoneNumber(phone),
+          venue_id: selectedVenue,
+          consent_timestamp: new Date().toISOString(),
+          vehicle_data: safeVehicleData,
+        }]);
+
+      if (insertError) {
+        throw insertError;
+      }
+
       try {
         // Get venue name for personalization
         let venueName = '';
@@ -963,10 +1079,19 @@ const BlockedDriverInput = ({ onComplete, onBack }) => {
 // Main App Component
 const App = () => {
   const [view, setView] = useState('home');
+<<<<<<< Updated upstream
   const [venueId] = useState(() => new URLSearchParams(window.location.search).get('venue_id'));
   const [venueName, setVenueName] = useState('');
+=======
+  const [user, setUser] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [profileError, setProfileError] = useState('');
+  const [showProfile, setShowProfile] = useState(false);
+  const navStack = useRef(['home']);
+>>>>>>> Stashed changes
 
   useEffect(() => {
+<<<<<<< Updated upstream
     if (!venueId) return;
     const request = new AbortController();
     loadVenues(request.signal)
@@ -976,6 +1101,38 @@ const App = () => {
       })
       .catch((error) => {
         if (!request.signal.aborted) console.error('Error fetching venue context:', error);
+=======
+    let unsub = null;
+    (async () => {
+      const sess = await getSession();
+      setLoadingSession(false);
+      if (sess && sess.user) {
+        setUser(sess.user);
+        // Upsert member profile
+        const { error } = await upsertMemberProfile(sess.user);
+        if (error) setProfileError('Could not create your member profile. Please contact support.');
+        else setProfileError('');
+      } else {
+        setUser(null);
+        setProfileError('');
+        setShowProfile(false);
+        setView('home'); // Only redirect to home on sign out
+      }
+      unsub = onAuthStateChange(async (newSession) => {
+        if (newSession && newSession.user) {
+          setUser(newSession.user);
+          // Upsert member profile
+          const { error } = await upsertMemberProfile(newSession.user);
+          if (error) setProfileError('Could not create your member profile. Please contact support.');
+          else setProfileError('');
+          // Do NOT redirect to home here; let user continue their journey
+        } else {
+          setUser(null);
+          setProfileError('');
+          setShowProfile(false);
+          setView('home'); // Only redirect to home on sign out
+        }
+>>>>>>> Stashed changes
       });
     return () => request.abort();
   }, [venueId]);
@@ -1008,6 +1165,7 @@ const App = () => {
             onFinish={() => setView('home')}
           />
         );
+<<<<<<< Updated upstream
       
       case 'admin-login':
         return <AdminLogin onLogin={() => setView('admin')} onBack={() => setView('home')} />;
@@ -1015,6 +1173,11 @@ const App = () => {
       case 'admin':
         return <AdminDashboard onBack={() => setView('home')} />;
       
+=======
+      // Placeholder for member login flow
+      case 'member-login':
+        return <MemberLogin onBack={goBack} onLogin={() => navigate('home')} />;
+>>>>>>> Stashed changes
       default:
         return <DriverWelcome onNavigate={setView} venueName={venueName} />;
     }

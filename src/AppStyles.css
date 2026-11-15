@@ -364,6 +364,16 @@ html, body {
   position: relative;
 }
 
+.admin-preview-notice {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #b9d9d7;
+  border-radius: 6px;
+  background: #edf8f7;
+  color: #23666a;
+  font-size: 0.9rem;
+}
+
 /* Admin content area with proper scrolling */
 .admin-content {
   flex: 1;
@@ -2001,5 +2011,76 @@ html, body {
   }
   .detail-label svg {
     margin-right: 0;
+  }
+}
+
+/* Venue admin dashboard layout */
+.admin-container {
+  width: min(100%, 1200px);
+  max-width: 1200px;
+  min-height: calc(100vh - 80px);
+  height: auto;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+  overflow: visible;
+}
+
+#root:has(.admin-dashboard-page) {
+  height: auto;
+  min-height: 100%;
+}
+
+html:has(.admin-dashboard-page),
+body:has(.admin-dashboard-page) {
+  height: auto;
+  min-height: 100%;
+}
+
+.admin-container .admin-header {
+  position: sticky;
+  top: 0;
+  padding: 1rem 0;
+}
+
+.admin-header .heading {
+  text-align: left;
+}
+
+.admin-controls {
+  flex: 1 1 620px;
+  justify-content: flex-end;
+}
+
+.search-container {
+  flex: 1 1 250px;
+  min-width: 220px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.admin-content {
+  overflow: visible;
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    min-height: auto;
+    height: auto;
+    padding: 1rem;
+  }
+
+  .admin-container .admin-header {
+    position: static;
+  }
+
+  .admin-controls {
+    flex-basis: auto;
+    justify-content: stretch;
+  }
+
+  .search-container {
+    min-width: 0;
   }
 }
